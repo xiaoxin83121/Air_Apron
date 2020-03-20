@@ -8,7 +8,7 @@ import time
 import progress.bar as Bar
 
 from .Loss import TrainLoss
-from utils import decode
+from ..utils import decode
 
 class ModelWithLoss(nn.Module):
     def __init__(self, model, loss):
