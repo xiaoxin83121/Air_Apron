@@ -5,7 +5,7 @@ from __future__ import print_function
 import torch
 import torch.nn as nn
 from .losses import FocalLoss, RegL1Loss, RegLoss, NormRegL1Loss, RegWeightedL1Loss
-from utils.decode import _sigmoid, gen_oracle_map
+from ..utils.decode import _sigmoid, gen_oracle_map
 
 class TrainLoss(nn.Module):
     def __init__(self, opt):

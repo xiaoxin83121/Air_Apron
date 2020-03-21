@@ -15,8 +15,8 @@ opt.reg_offset
 opt.flip_test
 """
 from .models import load_model, save_model, create_model
-from utils import image_process as ip
-from utils import decode
+from ..utils import image_process as ip
+from ..utils import decode
 
 class Detector(object):
     def __init__(self, opt):
@@ -38,8 +38,8 @@ class Detector(object):
         new_width = int(width*scale)
         if self.opt.fix_res:
             inp_height, inp_width = self.opt.input_h, self.opt.input_w
-            c = np.array([new_width / 2., new_height / 2.], dtype=np.float32)
-            s = max(height, width) * 1.0
+            c = np.array([new_width / 2., new_height / 2.], dtype=np.float32)  # center
+            s = max(height, width) * 1.0  # scale
         else:
             inp_height = (new_height | self.opt.pad) + 1
             inp_width = (new_width | self.opt.pad) + 1
