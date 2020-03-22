@@ -4,8 +4,8 @@ from __future__ import print_function
 
 import torch
 import torch.nn as nn
-from .losses import FocalLoss, RegL1Loss, RegLoss, NormRegL1Loss, RegWeightedL1Loss
-from ..utils.decode import _sigmoid, gen_oracle_map
+from lib.losses import FocalLoss, RegL1Loss, RegLoss, NormRegL1Loss, RegWeightedL1Loss
+from utils.decode import _sigmoid, gen_oracle_map
 
 class TrainLoss(nn.Module):
     def __init__(self, opt):
@@ -15,7 +15,7 @@ class TrainLoss(nn.Module):
             RegLoss() if opt.reg_loss == 'sl1' else None
         self.crit_wh = nn.L1Loss(reduction='sum') if opt.dense_wh else \
             NormRegL1Loss() if opt.norm_wh else \
-            RegWeightedL1Loss() if opt.cat_spec_with else self.crit_reg
+            RegWeightedL1Loss() if opt.cat_spec_wh else self.crit_reg
         self.opt = opt
 
     def forward(self, outputs, batch):

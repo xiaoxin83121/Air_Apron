@@ -7,8 +7,8 @@ import torch.nn as nn
 import time
 import progress.bar as Bar
 
-from .Loss import TrainLoss
-from ..utils import decode
+from lib.Loss import TrainLoss
+from utils import decode
 
 class ModelWithLoss(nn.Module):
     def __init__(self, model, loss):
@@ -71,51 +71,49 @@ class Trainer(object):
         data_time, batch_time = AverageMeter(), AverageMeter()
         avg_loss_stats = {l: AverageMeter() for l in self.loss_stats}
         num_iters = len(data_loader) if opt.num_iters < 0 else opt.num_iters
-        bar = Bar('{}/{}'.format(opt.task, opt.exp_id), max=num_iters)
+        print('{}/{}'.format(opt.task, opt.exp_id))
         end = time.time()
-        for iter_id, batch in enumerate(data_loader):
-            if iter_id >= num_iters:
-                break
-            data_time.update(time.time() - end)
+        with torch.no_grad():
+            for iter_id, batch in enumerate(data_loader):
+                if iter_id >= num_iters:
+                    break
+                data_time.update(time.time() - end)
 
-            for k in batch:
-                if k != 'meta':
-                    batch[k] = batch[k].to(device=opt.device, non_blocking=True)
-            output, loss, loss_stats = model_with_loss(batch)
-            loss = loss.mean()
-            if phase == 'train':
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
-            batch_time.update(time.time() - end)
-            end = time.time()
+                for k in batch:
+                    if k != 'meta':
+                        batch[k] = batch[k].to(device=opt.device, non_blocking=True)
+                output, loss, loss_stats = model_with_loss(batch)
+                loss = loss.mean()
+                if phase == 'train':
+                    self.optimizer.zero_grad()
+                    loss.backward()
+                    self.optimizer.step()
+                batch_time.update(time.time() - end)
+                end = time.time()
 
-            Bar.suffix = '{phase}: [{0}][{1}/{2}]|Tot: {total:} |ETA: {eta:} '.format(
-                epoch, iter_id, num_iters, phase=phase,
-                total=bar.elapsed_td, eta=bar.eta_td)
-            for l in avg_loss_stats:
-                avg_loss_stats[l].update(
-                    loss_stats[l].mean().item(), batch['input'].size(0))
-                Bar.suffix = Bar.suffix + '|{} {:.4f} '.format(l, avg_loss_stats[l].avg)
-            if not opt.hide_data_time:
-                Bar.suffix = Bar.suffix + '|Data {dt.val:.3f}s({dt.avg:.3f}s) ' \
-                                          '|Net {bt.avg:.3f}s'.format(dt=data_time, bt=batch_time)
-            if opt.print_iter > 0:
-                if iter_id % opt.print_iter == 0:
-                    print('{}/{}| {}'.format(opt.task, opt.exp_id, Bar.suffix))
-            else:
-                bar.next()
+                print('{phase}: [{0}][{1}/{2}]'.format(epoch, iter_id, num_iters, phase=phase))
+                for l in avg_loss_stats:
+                    avg_loss_stats[l].update(
+                        loss_stats[l].mean().item(), batch['input'].size(0))
+                    print('|{} {:.4f} '.format(l, avg_loss_stats[l].avg))
+                if not opt.hide_data_time:
+                    print('|Data {dt.val:.3f}s({dt.avg:.3f}s) ' \
+                                              '|Net {bt.avg:.3f}s'.format(dt=data_time, bt=batch_time))
+                if opt.print_iter > 0:
+                    if iter_id % opt.print_iter == 0:
+                        print('{}/{}'.format(opt.task, opt.exp_id))
+                else:
+                    pass
 
-            if opt.debug > 0:
-                self.debug(batch, output, iter_id)
+                if opt.debug > 0:
+                    self.debug(batch, output, iter_id)
 
-            if opt.test:
-                self.save_result(output, batch, results)
-            del output, loss, loss_stats
+                if opt.test:
+                    self.save_result(output, batch, results)
+                del output, loss, loss_stats
 
-        bar.finish()
         ret = {k: v.avg for k, v in avg_loss_stats.items()}
-        ret['time'] = bar.elapsed_td.total_seconds() / 60.
+        # ret['time'] = bar.elapsed_td.total_seconds() / 60.
         return ret, results
 
     def debug(self, batch, output, iter_id):

@@ -4,10 +4,10 @@ from __future__ import print_function
 
 import torch
 import torch.nn as nn
-from .hg_hourglass import get_large_hourglass_net
+from lib.hg_hourglass import get_large_hourglass_net
 
-def create_model(arch, heads, heads_conv):
-    model = get_large_hourglass_net(num_layers=0, heads=heads, heads_conv=heads_conv)
+def create_model(arch, heads, head_conv):
+    model = get_large_hourglass_net(num_layers=0, heads=heads, head_conv=head_conv)
     return model
 
 

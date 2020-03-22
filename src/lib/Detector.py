@@ -14,9 +14,9 @@ opt.pad
 opt.reg_offset
 opt.flip_test
 """
-from .models import load_model, save_model, create_model
-from ..utils import image_process as ip
-from ..utils import decode
+from lib.models import load_model, save_model, create_model
+from utils import image_process as ip
+from utils import decode
 
 class Detector(object):
     def __init__(self, opt):

@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import numba
 
-from .image_process import transform_preds
+from utils.image_process import transform_preds
 
 def ctdet_decode(heat, wh, reg=None, cat_spec_wh=False, K=100):
     batch, cat, height, width = heat.size()

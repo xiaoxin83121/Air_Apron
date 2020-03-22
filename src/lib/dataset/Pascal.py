@@ -9,10 +9,10 @@ import numpy as np
 import cv2
 import math
 
-from ...utils.image_process import get_affine_transform, draw_msra_gaussian, \
+from utils.image_process import get_affine_transform, draw_msra_gaussian, \
     affine_transform, gaussian_radius, draw_dense_reg
 
-class PascalVOC(data.dataset):
+class PascalVOC(data.Dataset):
     num_classes = 12
     default_resolution = [1920, 1080]
     # copy
@@ -46,7 +46,7 @@ class PascalVOC(data.dataset):
         self.split = split
         self.coco = coco.COCO(self.annot_path)
         self.images = sorted(self.coco.getImgIds())
-        self.num_samples = len(os.listdir(self.annot_path))
+        self.num_samples = len(self.images)
 
         print("dataset_{} load {} items".format(self.split, self.num_samples))
 
@@ -57,6 +57,7 @@ class PascalVOC(data.dataset):
         return border // i
 
     def _coco_box_to_bbox(self, box):
+        # change the format
         bbox = np.array([box[0], box[1], box[0] + box[2], box[1] + box[3]],
                         dtype=np.float32)
         return bbox
