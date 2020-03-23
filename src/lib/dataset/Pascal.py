@@ -8,6 +8,7 @@ from pycocotools import coco
 import numpy as np
 import cv2
 import math
+import json
 
 from utils.image_process import get_affine_transform, draw_msra_gaussian, \
     affine_transform, gaussian_radius, draw_dense_reg
@@ -179,3 +180,19 @@ class PascalVOC(data.Dataset):
             meta = {'c': c, 's': s, 'gt_det': gt_det, 'img_id': img_id}
             ret['meta'] = meta
         return ret
+
+    def convert_eval_format(self, all_bboxes):
+        detections = [[[] for __ in range(self.num_samples)] \
+                      for _ in range(self.num_classes + 1)]
+        for i in range(self.num_samples):
+            img_id = self.images[i]
+            for j in range(1, self.num_classes + 1):
+                if isinstance(all_bboxes[img_id][j], np.ndarray):
+                    detections[j][i] = all_bboxes[img_id][j].tolist()
+                else:
+                    detections[j][i] = all_bboxes[img_id][j]
+        return detections
+
+    def run_eval(self, results, save_dir):
+        json.dump(self.convert_eval_format(results),
+                  open('{}/results.json'.format(save_dir), 'w'))

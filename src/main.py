@@ -12,9 +12,10 @@ from tools.logger import Logger
 from lib.models import create_model, load_model, save_model
 from lib.trainer import Trainer
 
+
 """
 TODO:
-logger:
+verify
 """
 sys.path.append("C:/User/13778/workshop/gitrepos/Air_Apron/src/")
 
