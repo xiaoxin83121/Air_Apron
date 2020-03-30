@@ -26,13 +26,16 @@ inputs should be below per frame: [{
 def cal_size(elem):
     return elem['size'][0] * elem['size'][1]
 
+
 def cal_distance(elem1, elem2):
     c1 = elem1['center']
     c2 = elem2['center']
     return math.sqrt( (c1[0]-c2[0])**2 + (c1[1]-c2[1])**2 )
 
+
 def center_in(center, corner1, corner2):
     return center[0] > corner1[0] and center[0] < corner2[0] and center[1] > corner1[1] and center[1] < corner2[1]
+
 
 def find_max(inputs, split):
     _lists = []
@@ -41,6 +44,7 @@ def find_max(inputs, split):
             _lists.append(inp)
     sorted_list = sorted(_lists, key=cal_size, reverse=True)
     return sorted_list[0]
+
 
 def dfs(id, item_list, uncount_set):
     # given an id, return the remain_uncount_set and the already count id_list
@@ -53,6 +57,7 @@ def dfs(id, item_list, uncount_set):
     ids.add(id)
     return ids, uncount_set
 
+
 def queue_size(ids, item_list):
     left = []
     up = []
@@ -64,7 +69,6 @@ def queue_size(ids, item_list):
         right.append(item_list[id]['bbox'][3][0])
         down.append(item_list[id]['bbox'][3][1])
     return [ max(right) - min(left), max(down) - min(up)]
-
 
 
 def plane_pose(inputs):
@@ -134,6 +138,7 @@ def plane_pose(inputs):
 
     return res, plane_exist
 
+
 def single_process(inputs):
     cls = set()
     for inp in inputs:
@@ -151,6 +156,7 @@ def single_process(inputs):
         'is_plane': is_plane, 'plane':plane,
     }
     return res
+
 
 def mul_process(inputs):
     # 针对bus，，person和queue之间
@@ -202,6 +208,12 @@ def mul_process(inputs):
         'is_queue': is_queue, 'queue': queue_list
     }
     return res
+
+
+def extract_safe_area(inputs):
+    # merge road line contours and cone information into
+    pass
+
 
 if __name__ == "main":
     # TODO：生成一个test_inps

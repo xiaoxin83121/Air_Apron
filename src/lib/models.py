@@ -10,7 +10,6 @@ def create_model(arch, heads, head_conv):
     model = get_large_hourglass_net(num_layers=0, heads=heads, head_conv=head_conv)
     return model
 
-
 def load_model(model, model_path, optimizer=None, resume=False,
                lr=None, lr_step=None):
     start_epoch = 0

@@ -3,18 +3,89 @@ from __future__ import division
 from __future__ import print_function
 import numpy as np
 import torch
-import numba
+import torch.nn as nn
 
 from utils.image_process import transform_preds
+
+def _nms(heat, kernel=3):
+    pad = (kernel - 1) // 2
+
+    hmax = nn.functional.max_pool2d(
+        heat, (kernel, kernel), stride=1, padding=pad)
+    keep = (hmax == heat).float()
+    return heat * keep
+
+def _left_aggregate(heat):
+    '''
+        heat: batchsize x channels x h x w
+    '''
+    shape = heat.shape
+    heat = heat.reshape(-1, heat.shape[3])
+    heat = heat.transpose(1, 0).contiguous()
+    ret = heat.clone()
+    for i in range(1, heat.shape[0]):
+        inds = (heat[i] >= heat[i - 1])
+        ret[i] += ret[i - 1] * inds.float()
+    return (ret - heat).transpose(1, 0).reshape(shape)
+
+def _right_aggregate(heat):
+    '''
+        heat: batchsize x channels x h x w
+    '''
+    shape = heat.shape
+    heat = heat.reshape(-1, heat.shape[3])
+    heat = heat.transpose(1, 0).contiguous()
+    ret = heat.clone()
+    for i in range(heat.shape[0] - 2, -1, -1):
+        inds = (heat[i] >= heat[i +1])
+        ret[i] += ret[i + 1] * inds.float()
+    return (ret - heat).transpose(1, 0).reshape(shape)
+
+def _top_aggregate(heat):
+    '''
+        heat: batchsize x channels x h x w
+    '''
+    heat = heat.transpose(3, 2)
+    shape = heat.shape
+    heat = heat.reshape(-1, heat.shape[3])
+    heat = heat.transpose(1, 0).contiguous()
+    ret = heat.clone()
+    for i in range(1, heat.shape[0]):
+        inds = (heat[i] >= heat[i - 1])
+        ret[i] += ret[i - 1] * inds.float()
+    return (ret - heat).transpose(1, 0).reshape(shape).transpose(3, 2)
+
+def _bottom_aggregate(heat):
+    '''
+        heat: batchsize x channels x h x w
+    '''
+    heat = heat.transpose(3, 2)
+    shape = heat.shape
+    heat = heat.reshape(-1, heat.shape[3])
+    heat = heat.transpose(1, 0).contiguous()
+    ret = heat.clone()
+    for i in range(heat.shape[0] - 2, -1, -1):
+        inds = (heat[i] >= heat[i + 1])
+        ret[i] += ret[i + 1] * inds.float()
+    return (ret - heat).transpose(1, 0).reshape(shape).transpose(3, 2)
+
+def _h_aggregate(heat, aggr_weight=0.1):
+    return aggr_weight * _left_aggregate(heat) + \
+           aggr_weight * _right_aggregate(heat) + heat
+
+def _v_aggregate(heat, aggr_weight=0.1):
+    return aggr_weight * _top_aggregate(heat) + \
+           aggr_weight * _bottom_aggregate(heat) + heat
 
 def ctdet_decode(heat, wh, reg=None, cat_spec_wh=False, K=100):
     batch, cat, height, width = heat.size()
 
     # heat = torch.sigmoid(heat)
     # perform nms on heatmaps
+    heat = _nms(heat)
 
-    # ignore the nms
-    # heat = _nms(heat)
+    heat = _h_aggregate(heat)
+    heat = _v_aggregate(heat)
 
     scores, inds, clses, ys, xs = _topk(heat, K=K)
     if reg is not None:
@@ -100,7 +171,6 @@ def _sigmoid(x):
   y = torch.clamp(x.sigmoid_(), min=1e-4, max=1-1e-4)
   return y
 
-@numba.jit(nopython=True, nogil=True)
 def gen_oracle_map(feat, ind, w, h):
   # feat: B x maxN x featDim
   # ind: B x maxN

@@ -50,7 +50,7 @@ def main(opt):
 
     if opt.test:
         _, preds = trainer.val(0, val_loader)
-        # ignore the run_eval()
+        val_loader.dataset.run_eval(preds, opt.save_dir)
     train_loader = torch.utils.data.DataLoader(
         Dataset(opt, 'train'), batch_size=opt.batch_size, shuffle=True,
         num_workers=opt.num_workers, pin_memory=True, drop_last=True

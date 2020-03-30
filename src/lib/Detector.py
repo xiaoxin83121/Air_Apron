@@ -20,10 +20,16 @@ from utils import decode
 
 class Detector(object):
     def __init__(self, opt):
+        if opt.gpus[0] >= 0:
+            opt.device = torch.device('cuda')
+        else:
+            opt.device = torch.device('cpu')
+
         print("createing model..........")
         self.model = create_model(opt.arch, opt.heads, opt.head_conv)
         self.model = load_model(self.model, opt.load_model)
-        self.model = self.model.to(torch.device('cuda')) ##
+        self.model = self.model.to(opt.device)
+        self.model.eval()
 
         self.mean = np.array(opt.mean, dtype=np.float32).reshape(1, 1, 3)
         self.std = np.array(opt.std, dtype=np.float32).reshape(1, 1, 3)
@@ -68,7 +74,6 @@ class Detector(object):
             hm = output['hm'].sigmoid_()
             wh = output['wh']
             reg = output['reg'] if self.opt.reg_offset else None
-            # ignore the flip_test
             torch.cuda.synchronize()
             forward_time = time.time()
             dets = decode.ctdet_decode(hm, wh, reg, cat_spec_wh=self.opt.cat_spec_with, K=self.opt.K)
@@ -142,7 +147,7 @@ class Detector(object):
             decode_time = time.time()
             dec_time += decode_time - forward_time
 
-            self.post_process(dets, meta, scale)
+            dets = self.post_process(dets, meta, scale)
             torch.cuda.synchronize()
             post_process_time = time.time()
             post_time += post_process_time - decode_time

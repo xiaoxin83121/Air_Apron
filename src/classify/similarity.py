@@ -34,11 +34,11 @@ class Frame_Queue(object):
     def split_deal(self, split):
         if not self.windows_empty(split):
             center = self.cal_means(split)
-            self.q[len(self.q)-1][split]['center'][0] = int(center[0] * (len(self.q)-1 / len(self.q)) + \
-                                                            self.q[len(self.q)-1][split]['center'][0] * \
+            self.q[-1][split]['center'][0] = int(center[0] * (len(self.q)-1 / len(self.q)) + \
+                                                            self.q[-1][split]['center'][0] * \
                                                             (1 / len(self.q)))
-            self.q[len(self.q) - 1][split]['center'][1] = int(center[1] * (len(self.q) - 1 / len(self.q)) + \
-                                                              self.q[len(self.q) - 1][split]['center'][1] *
+            self.q[-1][split]['center'][1] = int(center[1] * (len(self.q) - 1 / len(self.q)) + \
+                                                              self.q[-1][split]['center'][1] *
                                                             (1 / len(self.q)))
 
     def windows_empty(self, split):
@@ -72,7 +72,7 @@ class Frame_Queue(object):
 
     def fresh(self, split):
         # work when self.is_move==True; refresh the self.q
-        self.q[len(self.q)-1][split] = self.cache[len(self.cache)-1][split]
+        self.q[-1][split] = self.cache[-1][split]
 
     def get_result(self):
         # get the final result
@@ -81,5 +81,5 @@ class Frame_Queue(object):
             move_res.update({obj+'_move':self.is_move(split=obj)})
             if self.is_move(split=obj):
                 self.fresh(split=obj)
-        return self.q[len(self.q)-1].update(move_res)
+        return self.q[-1].update(move_res)
 
