@@ -47,7 +47,7 @@ class Vote_Net(object):
         samples = np.array(sample_batch, dtype=np.float32)
         labels = np.array(label_batch, dtype=np.int8)
         x = Variable(torch.Tensor(samples).type(torch.FloatTensor))
-        y = Variable(torch.Tensor(labels).type(torch.FloatTensor))
+        y = Variable(torch.Tensor(labels).type(torch.IntTensor))
 
         for i in range(self.n):
             optimizer = torch.optim.Adam(self.nets[i].parameters(), lr=0.02)
@@ -67,11 +67,11 @@ class Vote_Net(object):
     def val(self, index, sample_batch, label_batch, save_dir, latest_iter):
         file_name = 'net_'+str(index)+'_'+str(latest_iter)+'.pkl'
         model = torch.load(os.path.join(save_dir, file_name))
-        samples = np.ndarray(sample_batch.shape, dtype=np.float32)
-        labels = np.ndarray(label_batch.shape, dtype=np.int8)
+        samples = np.array(sample_batch, dtype=np.float32)
+        labels = np.array(label_batch, dtype=np.int8)
 
         x = Variable(torch.Tensor(samples).type(torch.FloatTensor))
-        y = Variable(torch.Tensor(labels).type(torch.FloatTensor))
+        y = Variable(torch.Tensor(labels).type(torch.IntTensor))
 
         preds = model(x)
         count = 0
@@ -82,13 +82,19 @@ class Vote_Net(object):
 
     def vote(self, save_dir, latest_iter, sample):
         preds = []
+        pos = 0
         # 与class有关
+        sample = np.array(sample, dtype=np.float32)
+        x = Variable(torch.Tensor(sample).type(torch.FloatTensor))
         for i in range(self.n):
             file_name = 'net_' + str(i) + '_' + str(latest_iter) + '.pkl'
             model = torch.load(os.path.join(save_dir, file_name))
-            pred = model(sample)
+            pred = model(x)
             preds.append(pred)
-
+            pos += 1
+        if pos > self.n //2:
+            return 1
+        return 0
 
 
 

@@ -210,7 +210,6 @@ def compute_res_loss(output, target):
     return F.smooth_l1_loss(output, target, reduction='elementwise_mean')
 
 
-# TODO: weight
 def compute_bin_loss(output, target, mask):
     mask = mask.expand_as(output)
     output = output * mask.float()

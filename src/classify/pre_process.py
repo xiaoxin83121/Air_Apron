@@ -4,6 +4,8 @@ from __future__ import print_function
 
 import math
 import numpy as np
+import cv2
+from classify.data_augment import generate_test
 
 input_w, input_h = (1920, 1080)
 Distance = 200
@@ -44,6 +46,13 @@ def find_max(inputs, split):
             _lists.append(inp)
     sorted_list = sorted(_lists, key=cal_size, reverse=True)
     return sorted_list[0]
+
+
+def find_lowest(inputs):
+    # return the lowest object in pic
+    _list = [inp['center'][1] for inp in inputs]
+    index = _list.index(min(_list))
+    return index
 
 
 def dfs(id, item_list, uncount_set):
@@ -118,22 +127,27 @@ def plane_pose(inputs):
 
 
     horizon = -1
+    ground = -1
     if plane_exist:
         if len(plane_dict['engine']) >= 2:
             engine1 = plane_dict['engine'][0]
             engine2 = plane_dict['engine'][1]
             dividend = ( abs(engine1[1] - engine2[1]) ) / ( abs(engine1[0] - engine2[0]) )
             horizon = math.atan(dividend)
-    # TODO: wings相关处理
+        if len(plane_dict['wheel']) >= 1:
+            # 找到画面最下方的轮
+            index = find_lowest(plane_dict['wheel'])
+            ground = plane_dict['wheel'][index]['center']
 
     res = {
         'class': 'plane',
         'center': plane['center'],
         'size': plane['size'],
-        'horizon': horizon
+        'horizon': horizon,
+        'ground': ground
     } if plane_exist==True else\
     {
-        'class':'', 'center': [], 'size': [], 'horizon': -1
+        'class':'', 'center': [], 'size': [], 'horizon': -1, 'ground': ground
         }
 
     return res, plane_exist
@@ -164,6 +178,7 @@ def mul_process(inputs):
     person_list = []
     queue_list = []
     bus_list = []
+    person_ids = []
     count = 0
     for inp in inputs:
         cls.add(inp['class'])
@@ -200,22 +215,64 @@ def mul_process(inputs):
                          [center[0] + s[0]/2, center[1] + s[1]/2]]
             }
             queue_list.append(dic)
+        else:
+            person_ids.append(ids)
+        seed = uncount_set.pop()
 
     is_queue = is_queue and count >= People_Num
     res = {
         'is_bus': is_bus, 'bus': bus_list,
-        'is_person': is_person, 'person': person_list,
+        'is_person': is_person, 'person': person_list, 'person_ids': person_ids,
         'is_queue': is_queue, 'queue': queue_list
     }
     return res
 
 
-def extract_safe_area(inputs):
-    # merge road line contours and cone information into
-    pass
+def safe_area(inputs):
+    # bus or person in safe_area
+    # return: is_safe=0 可能出现风险；is_safe=1 不会出现风险
+    cone_list = []
+    for inp in inputs:
+        if inp['class'] == 'cone':
+            cone_list.append(inp)
+
+    # 形成一个cone的区域闭包
+    steady_list = single_process(inputs)
+    if steady_list['is_plane']:
+        cone_set = list()
+        plane_center = steady_list['plane']['center']
+        ground_center = steady_list['ground']['center']
+        center = [(plane_center[0] + ground_center[0]) // 2, (plane_center[1] + ground_center[1]) // 2]
+        # 将检测到的cone和center做对称，计算相应的cone集合
+        for cone in cone_list:
+            cone_set.append(cone['center'])
+        for cone in cone_list:
+            vcone_center = [ center[0] - (cone['center'][0]-center[0]), cone['center'][1]]
+            vcone = {'center':vcone_center}
+            flag = True
+            for c in cone_list:
+                if cal_distance(vcone, c) <= 50:
+                    flag = False
+                    break
+            if flag:
+                cone_set.append(vcone_center)
+
+        # 整理出区域, 线段格式
+        line_set = list()
+        cone_set_sorted = sorted(cone_set, key=lambda x:x[0])
+        length = len(cone_set)
+        if length <= 1:
+            return {'is_safe':1, 'area':[]}
+        else:
+            for i in range(length-1):
+                line_set.append([cone_set_sorted[i], cone_set_sorted[i+1]])
+            line_set.append([[cone_set_sorted[0][0], 0], cone_set_sorted[0]])
+            line_set.append([[cone_set_sorted[-1][0], 0], cone_set_sorted[-1]])
+            return {'is_safe':0, 'area': line_set}
+    else:
+        return {'is_safe':1, 'area':[]}
 
 
 if __name__ == "main":
-    # TODO：生成一个test_inps
     test_inps = []
     single_process(test_inps)

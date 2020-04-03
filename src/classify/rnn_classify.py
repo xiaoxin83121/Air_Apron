@@ -36,12 +36,11 @@ def rnn_train(inps, labels, save_dir, iter_num=1000, inp_size=10, out_size=2):
 
     # inps和labels == np(batch_size, time_inp, feature_size)
     # eg: 2个batch:一个batch5个sque:一个sque5个dim
-    # TODO: change the inps and labels
-    sample = np.ndarray([2,10,inp_size], dtype=np.float32)
-    label = np.ndarray([2,10, out_size], dtype=np.int8)
+    sample = np.array(inps, dtype=np.float32)
+    label = np.array(labels, dtype=np.int8)
 
     x = Variable(torch.Tensor(sample).type(torch.FloatTensor))
-    y = Variable(torch.Tensor(label).type(torch.FloatTensor))
+    y = Variable(torch.Tensor(label).type(torch.IntTensor))
 
     optimizer = torch.optim.Adam(rnn.parameters(), lr=0.02)
     loss_func = nn.MSELoss()
@@ -60,8 +59,24 @@ def rnn_train(inps, labels, save_dir, iter_num=1000, inp_size=10, out_size=2):
         if (iter+1)%1000 == 0:
             torch.save(rnn, save_dir+'rnn_'+str(iter+1)+'.pkl')
 
-def rnn_eval():
-    pass
 
-def rnn_demo():
-    pass
+def rnn_eval(sample_batch, label_batch, save_dir, latest_iter):
+    model = torch.load(save_dir+'rnn_'+str(latest_iter)+'.pkl')
+    samples = np.array(sample_batch, dtype=np.float32)
+    labels = np.array(label_batch, dtype=np.int8)
+    x = Variable(torch.Tensor(samples).type(torch.FloatTensor))
+    y = Variable(torch.Tensor(labels).type(torch.IntTensor))
+
+    preds = model(x)
+    count = 0
+    for i in range(sample_batch.shape[0]):
+        if preds[i] == labels[i]:
+            count += 1
+    return count / sample_batch.shape[0]
+
+
+def rnn_demo(save_dir, latest_iter, sample):
+    model = torch.load(save_dir, 'rnn_'+str(latest_iter)+'.pkl')
+    sample = np.array(sample, dtype=np.float32)
+    x = Variable(torch.Tensor(sample).type(torch.FloatTensor))
+    return model(x)

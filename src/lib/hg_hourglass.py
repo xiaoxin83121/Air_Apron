@@ -183,8 +183,6 @@ class kp_module(nn.Module):  # Figure3:hourglassNet unit
         max1 = self.max1(x)  # 原始图像
         low1 = self.low1(max1)  # 卷积，同up1
         low2 = self.low2(low1)  # 递归的kp_module，第五层递归是同up1的卷积
-        # TODO: Guassian and classes activation map here
-
         low3 = self.low3(low2)  # 反卷
         up2 = self.up2(low3)  # 上采样层
         return self.merge(up1, up2)
