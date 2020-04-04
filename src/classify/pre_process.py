@@ -5,7 +5,6 @@ from __future__ import print_function
 import math
 import numpy as np
 import cv2
-from classify.data_augment import generate_test
 
 input_w, input_h = (1920, 1080)
 Distance = 200
@@ -165,9 +164,9 @@ def single_process(inputs):
     plane, is_plane = plane_pose(inputs)
     res = {
         'is_oilcar':is_oilcar, 'oil_car':find_max(inputs, 'oil_car') if is_oilcar else empty_dict,
-        'is_stair': is_stair, 'stair': find_max(inputs, 'stair') if is_oilcar else empty_dict,
-        'is_tractor': is_tractor, 'tractor': find_max(inputs, 'tractor') if is_oilcar else empty_dict,
-        'is_plane': is_plane, 'plane':plane,
+        'is_stair': is_stair, 'stair': find_max(inputs, 'stair') if is_stair else empty_dict,
+        'is_tractor': is_tractor, 'tractor': find_max(inputs, 'tractor') if is_tractor else empty_dict,
+        'is_plane': is_plane, 'plane': plane,
     }
     return res
 
@@ -188,6 +187,7 @@ def mul_process(inputs):
             queue_list.append(inp)
         if inp['class'] == 'bus':
             bus_list.append(inp)
+    print(cls)
     is_bus = True if 'bus' in cls else False
     is_person = True if 'person' in cls else False
     is_queue = True if 'queue' in cls else False
@@ -272,7 +272,3 @@ def safe_area(inputs):
     else:
         return {'is_safe':1, 'area':[]}
 
-
-if __name__ == "main":
-    test_inps = []
-    single_process(test_inps)
