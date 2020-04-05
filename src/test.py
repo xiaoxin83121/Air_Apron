@@ -16,7 +16,8 @@ from tools.logger import Logger
 from lib.Detector import Detector
 from lib.trainer import AverageMeter
 
-sys.path.append("C:/User/13778/workshop/gitrepos/Air_Apron/src/")
+# sys.path.append("C:/User/13778/workshop/gitrepos/Air_Apron/src/")
+sys.path.append("/gs/home/tongchao/zc/Air_Apron/src/")
 
 class PrefetchDataset(torch.utils.data.Dataset):
     def __init__(self, opt, dataset, pre_process_func):

@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import os
+import sys
 import cv2
 from lib.opts import opts
 from lib.Detector import Detector
@@ -10,6 +11,9 @@ from lib.Detector import Detector
 image_ext = ['jpg', 'jpeg', 'png', 'webp']
 video_ext = ['mp4', 'mov', 'avi', 'mkv']
 time_stats = ['tot', 'load', 'pre', 'net', 'dec', 'post', 'merge']
+
+# sys.path.append("C:/User/13778/workshop/gitrepos/Air_Apron/src/")
+sys.path.append("/gs/home/tongchao/zc/Air_Apron/src/")
 
 
 def demo(opt):

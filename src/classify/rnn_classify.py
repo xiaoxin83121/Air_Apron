@@ -62,7 +62,7 @@ def rnn_train(inps, labels, save_dir, iter_num=1000, inp_size=10, out_size=2):
         loss.backward()
         optimizer.step()
 
-        if (iter+1)%1000 == 0:
+        if (iter+1) % 5000 == 0:
             torch.save(rnn, save_dir+'rnn_'+str(iter+1)+'.pkl')
 
 

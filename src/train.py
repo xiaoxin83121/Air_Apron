@@ -17,7 +17,8 @@ from lib.trainer import Trainer
 TODO:
 verify
 """
-sys.path.append("C:/User/13778/workshop/gitrepos/Air_Apron/src/")
+# sys.path.append("C:/User/13778/workshop/gitrepos/Air_Apron/src/")
+sys.path.append("/gs/home/tongchao/zc/Air_Apron/src/")
 
 
 def train(opt):

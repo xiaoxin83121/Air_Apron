@@ -67,7 +67,7 @@ class Vote_Net(object):
                 loss.backward()
                 optimizer.step()
 
-                if (iter + 1) % 1000 == 0:
+                if (iter + 1) % 5000 == 0:
                     torch.save(self.nets[i], save_dir + 'net_'+ str(i) +'_' + str(iter + 1) + '.pkl')
 
     def val(self, index, sample_batch, label_batch, save_dir, latest_iter, inp_size=47, out_size=4):
@@ -90,19 +90,19 @@ class Vote_Net(object):
             results.append(np.mean(res))
         return results
 
-    def vote(self,  sample, save_dir, latest_iter):
-        preds = []
-        pos = 0
-        # 与class有关
-        sample = np.array(sample, dtype=np.float32)
-        x = Variable(torch.Tensor(sample).type(torch.FloatTensor))
-        for i in range(self.n):
-            file_name = 'net_' + str(i) + '_' + str(latest_iter) + '.pkl'
-            model = torch.load(os.path.join(save_dir, file_name))
-            pred = model(x)
-            preds.append(pred)
-        preds = np.array(preds)
-        return np.argmax(np.bincount(preds))
+def vote(sample, save_dir):
+    preds = []
+    pos = 0
+    # 与class有关
+    sample = np.array(sample, dtype=np.float32)
+    x = Variable(torch.Tensor(sample).type(torch.FloatTensor))
+    files = os.listdir(save_dir)
+    for file in files:
+        model = torch.load(os.path.join(save_dir, file))
+        pred = model(x)
+        preds.append(pred)
+    preds = np.array(preds)
+    return np.argmax(np.bincount(preds))
 
 
 
