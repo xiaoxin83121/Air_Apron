@@ -139,7 +139,7 @@ class RegLoss(nn.Module):
         super(RegLoss, self).__init__()
 
     def forward(self, output, mask, ind, target):
-        pred = (output, ind)
+        pred = _transpose_and_gather_feat(output, ind)
         loss = _reg_loss(pred, target, mask)
         return loss
 
@@ -149,7 +149,7 @@ class RegL1Loss(nn.Module):
         super(RegL1Loss, self).__init__()
 
     def forward(self, output, mask, ind, target):
-        pred = (output, ind)
+        pred = _transpose_and_gather_feat(output, ind)
         mask = mask.unsqueeze(2).expand_as(pred).float()
         # loss = F.l1_loss(pred * mask, target * mask, reduction='elementwise_mean')
         loss = F.l1_loss(pred * mask, target * mask, size_average=False)
@@ -162,7 +162,7 @@ class NormRegL1Loss(nn.Module):
         super(NormRegL1Loss, self).__init__()
 
     def forward(self, output, mask, ind, target):
-        pred = (output, ind)
+        pred = _transpose_and_gather_feat(output, ind)
         mask = mask.unsqueeze(2).expand_as(pred).float()
         # loss = F.l1_loss(pred * mask, target * mask, reduction='elementwise_mean')
         pred = pred / (target + 1e-4)
@@ -177,7 +177,7 @@ class RegWeightedL1Loss(nn.Module):
         super(RegWeightedL1Loss, self).__init__()
 
     def forward(self, output, mask, ind, target):
-        pred = (output, ind)
+        pred = _transpose_and_gather_feat(output, ind)
         mask = mask.float()
         # loss = F.l1_loss(pred * mask, target * mask, reduction='elementwise_mean')
         loss = F.l1_loss(pred * mask, target * mask, size_average=False)
@@ -190,7 +190,7 @@ class L1Loss(nn.Module):
         super(L1Loss, self).__init__()
 
     def forward(self, output, mask, ind, target):
-        pred = (output, ind)
+        pred = _transpose_and_gather_feat(output, ind)
         mask = mask.unsqueeze(2).expand_as(pred).float()
         loss = F.l1_loss(pred * mask, target * mask, reduction='elementwise_mean')
         return loss
@@ -201,7 +201,7 @@ class BinRotLoss(nn.Module):
         super(BinRotLoss, self).__init__()
 
     def forward(self, output, mask, ind, rotbin, rotres):
-        pred = (output, ind)
+        pred = _transpose_and_gather_feat(output, ind)
         loss = compute_rot_loss(pred, rotbin, rotres, mask)
         return loss
 
