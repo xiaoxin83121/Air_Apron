@@ -18,26 +18,23 @@ def generate_dataset(dir):
     # 从data中获取事件检测所用的数据集
     samples = []
     labels = []
-    file_path = os.path.join(dir, 'sequence.csv')
+    file_path = os.path.join(dir, 'sequence1.csv')
     sequence = pd.read_csv(file_path).values
     length = len(sequence)
     for i in range(length):
         sample = generate_test('data/VOC2007/Annotations/', i)
-        res, pos_res = merge(sample, single_process(sample))
+        res, pos_res, size_res = merge(sample, single_process(sample))
         sample = res.values()
         for p in pos_res:
             sample.append(p[0])
             sample.append(p[1])
+        for s in size_res:
+            sample.append(s[0])
+            sample.append(s[1])
         label = sequence[i]
         samples.append(sample)
         labels.append(label)
-    #TODO: normalize
     return samples, labels
-
-
-def data_augument():
-    # 对数据集进行数据增广
-    pass
 
 
 def generate_test(dirs, indexs):
@@ -122,12 +119,12 @@ def merge(inputs, sgl):
         dps_max[i] = dmax
     res = {
         'is_plane': 1 if sgl['is_plane'] else 0, 'is_oil_car': 1 if sgl['is_oil_car'] else 0,
-        'is_stair': 1 if sgl['is_stair'] else 0, 'is_tractor': 1 if sgl['is_tractor'] else 0,
+        'is_stair': 1 if sgl['is_stair'] else 0, 'is_traction': 1 if sgl['is_traction'] else 0,
         'is_person': 1 if mul['is_person'] else 0, 'is_queue': 1 if mul['is_queue'] else 0,
         'is_bus': 1 if mul['is_bus'] else 0,
         'plane2oil': cal_distance(sgl['plane'], sgl['oil_car']) if sgl['is_plane'] and sgl['is_oil_car'] else -1,
         'plane2stair': cal_distance(sgl['plane'], sgl['stair']) if sgl['is_plane'] and sgl['is_stair'] else -1,
-        'plane2tractor': cal_distance(sgl['plane'], sgl['tractor']) if sgl['is_plane'] and sgl['is_tractor'] else -1,
+        'plane2traction': cal_distance(sgl['plane'], sgl['traction']) if sgl['is_plane'] and sgl['is_traction'] else -1,
         'dps_min1': dps_min[0], 'dps_min2': dps_min[1], 'dps_min3': dps_min[2],
         'dps_min4': dps_min[3], 'dps_min5': dps_min[4],
         'dps_max1': dps_max[0], 'dps_max2': dps_max[1], 'dps_max3': dps_max[2],
@@ -139,7 +136,84 @@ def merge(inputs, sgl):
         'pq1': pq[0], 'pq2': pq[1],
         'pp1': pp[0], 'pp2': pp[1], 'pp3': pp[2], 'pp4': pp[3], 'pp5': pp[4],
         'pplane': sgl['plane']['center'], 'po': sgl['oil_car']['center'],
-        'ps': sgl['stair']['center'], 'pt': sgl['tractor']['center']
+        'ps': sgl['stair']['center'], 'pt': sgl['traction']['center']
     }
-    return res, pos_res
+    size_res = {
+        'sp': sgl['plane']['size'] if sgl['is_plane'] else [-1,-1],
+        'so': sgl['oil_car']['size'] if sgl['is_oil_car'] else [-1,-1],
+        'ss': sgl['stair']['size'] if sgl['is_stair'] else [-1,-1],
+        'st': sgl['traction']['size'] if sgl['is_traction'] else [-1,-1]
+    }
+    return res, pos_res, size_res
 
+
+def data_augument(seq_dir, anno_dir, csv_name):
+    # 对数据集进行数据增广
+    seq_path = os.path.join(seq_dir, csv_name)
+    sequence = pd.read_csv(seq_path).values
+    state = 0
+    samples = []
+    for i in range(len(sequence)):
+        sample = generate_test(anno_dir, i)
+        sgl = single_process(sample)
+        res, pos_res = merge(sample, sgl)
+        if res['is_bus'] == 1:
+            state = 1
+        if res['is_stair'] == 0:
+            state = 2
+        if res['is_plane'] == 0:
+            state = 0
+        interim_vec = generate_interim_vector(state, sample)
+        sample = recur_sample_label(interim_vec, sample)
+        samples.append(sample)
+    print(sequence)
+    return {'samples': samples, 'sequence': sequence}
+
+
+def generate_interim_vector(state, sample):
+    """generate interim vector to make sure changes of samples and labels
+    interim_vec_sample = [{'on_off':1, 'center_bias':[a,b], 'size_bias':[a,b], }...]
+    add_vec_sample = [{'class':'stair', }] ## ignore
+    """
+    # 不同阶段的噪声控制normal参数 [avg=0, var]
+    state_p_dict = [
+        [25, 100],
+        [9, 36],
+        [64, 400]
+    ]
+    on_off_dict = [
+        0.95, 0.9, 0.98
+    ]
+
+    interim_vec_sample = []
+    length = len(sample)
+    guassian_center = np.random.normal(0, state_p_dict[state][0], (length, 2))
+    guassian_size = np.random.normal(0, state_p_dict[state][1], (length, 2))
+    on_off = []
+    for r in np.random.random(length):
+        on_off.append(1 if r > on_off_dict[state] else 0)
+    print(guassian_center)
+    print(guassian_size)
+    print(on_off)
+    for iter in range(length):
+        iter_dic = dict()
+        iter_dic['on_off'] = on_off[iter]
+        iter_dic['center_bias'] = guassian_center[iter]
+        iter_dic['size_bias'] = guassian_size[iter]
+        interim_vec_sample.append(iter_dic)
+    return interim_vec_sample
+
+
+def recur_sample_label(interim_vec, samples):
+    length = len(samples)
+    for iter in range(length):
+        vec = interim_vec[iter]
+        sample = samples[iter]
+        if vec['on_off'] == 0:
+            del samples[iter]
+        else:
+            center_bias = vec['center_bias']
+            size_bias = vec['size_bias']
+            sample['center'] = [ sample['center'][0]+center_bias[0], sample['center'][1]+center_bias[1] ]
+            sample['size'] = [ sample['size'][0]+size_bias[0], sample['size'][1]+size_bias[1] ]
+    return samples

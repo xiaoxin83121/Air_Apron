@@ -9,7 +9,7 @@ from classify.rnn_classify import rnn_train, rnn_eval, rnn_demo
 from classify.vote_classify import Vote_Net
 MAX_SIZE = 10
 WINDOWS = 3
-INP_SIZE = 47
+INP_SIZE = 55
 OUT_SIZE = 4
 
 """

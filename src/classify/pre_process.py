@@ -157,15 +157,15 @@ def single_process(inputs):
     for inp in inputs:
         cls.add(inp['class'])
     print(cls)
-    empty_dict = {'class':'', 'bbox':[], 'center':[], 'size': []}
+    empty_dict = {'class':'', 'bbox':[], 'center':[0, 0], 'size': [0, 0]}
     is_oilcar = True if 'oil_car' in cls else False
     is_stair = True if 'stair' in cls else False
-    is_tractor = True if 'tractor' in cls else False
+    is_traction = True if 'traction' in cls else False
     plane, is_plane = plane_pose(inputs)
     res = {
-        'is_oilcar':is_oilcar, 'oil_car':find_max(inputs, 'oil_car') if is_oilcar else empty_dict,
+        'is_oil_car':is_oilcar, 'oil_car':find_max(inputs, 'oil_car') if is_oilcar else empty_dict,
         'is_stair': is_stair, 'stair': find_max(inputs, 'stair') if is_stair else empty_dict,
-        'is_tractor': is_tractor, 'tractor': find_max(inputs, 'tractor') if is_tractor else empty_dict,
+        'is_traction': is_traction, 'traction': find_max(inputs, 'traction') if is_traction else empty_dict,
         'is_plane': is_plane, 'plane': plane,
     }
     return res
