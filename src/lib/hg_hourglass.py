@@ -304,6 +304,9 @@ class HourglassNet(exkp):
         n = 5
         dims = [256, 256, 384, 384, 384, 512]
         modules = [2, 2, 2, 2, 2, 4]
+        # n = 3
+        # dims = [256, 256, 384, 512]
+        # modules = [2, 2, 2, 4]
 
         super(HourglassNet, self).__init__(
             n, num_stacks, dims, modules, heads,

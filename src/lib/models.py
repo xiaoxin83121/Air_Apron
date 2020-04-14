@@ -5,9 +5,11 @@ from __future__ import print_function
 import torch
 import torch.nn as nn
 from lib.hg_hourglass import get_large_hourglass_net
+from lib.resnet import get_pose_net
 
 def create_model(arch, heads, head_conv):
-    model = get_large_hourglass_net(num_layers=0, heads=heads, head_conv=head_conv)
+    # model = get_large_hourglass_net(num_layers=0, heads=heads, head_conv=head_conv)
+    model = get_pose_net(18, heads=heads, head_conv=head_conv)
     return model
 
 def load_model(model, model_path, optimizer=None, resume=False,
