@@ -11,11 +11,11 @@ import math
 import json
 
 from utils.image_process import get_affine_transform, draw_msra_gaussian, \
-    affine_transform, gaussian_radius, draw_dense_reg
+    affine_transform, gaussian_radius, draw_dense_reg, draw_umich_gaussian
 
 class PascalVOC(data.Dataset):
     num_classes = 12
-    default_resolution = [1920, 1080]
+    default_resolution = [1024, 576]
     # copy
     mean = np.array([0.485, 0.456, 0.406],
                     dtype=np.float32).reshape(1, 1, 3)
@@ -130,7 +130,7 @@ class PascalVOC(data.Dataset):
         cat_spec_wh = np.zeros((self.max_objs, num_classes * 2), dtype=np.float32)
         cat_spec_mask = np.zeros((self.max_objs, num_classes * 2), dtype=np.uint8)
 
-        draw_gaussian = draw_msra_gaussian # set mera_gaussian as default
+        draw_gaussian = draw_umich_gaussian # set mera_gaussian as default
 
         gt_det = []
         for k in range(num_objs):
@@ -151,7 +151,13 @@ class PascalVOC(data.Dataset):
                 ct = np.array(
                     [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2], dtype=np.float32)
                 ct_int = ct.astype(np.int32)
+                # if k == 0 and item == 0:
+                #     print('{} | {} | {}'.format(cls_id, ct_int, radius))
+                #     print(hm[cls_id])
                 draw_gaussian(hm[cls_id], ct_int, radius)
+                # if k == 0 and item == 0:
+                #     print('----------------')
+                #     print(hm[cls_id])
                 wh[k] = 1. * w, 1. * h
                 ind[k] = ct_int[1] * output_w + ct_int[0]
                 reg[k] = ct - ct_int

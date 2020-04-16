@@ -58,6 +58,11 @@ def train(opt):
         num_workers=opt.num_workers, pin_memory=True, drop_last=True
     )
 
+    # for iter, batch in enumerate(train_loader):
+    #     if iter == 1:
+    #         print(batch['hm'].shape)
+    #         break
+
     print("Start Training......")
     best = 1e10
     for epoch in range(start_epoch + 1, opt.num_epochs + 1):
