@@ -97,9 +97,9 @@ class Trainer(object):
             # Bar.suffix = '{phase}: [{0}][{1}/{2}]|Tot: {total:} |ETA: {eta:} '.format(
             #     epoch, iter_id, num_iters, phase=phase,
             #     total=bar.elapsed_td, eta=bar.eta_td)
-            # for l in avg_loss_stats:
-            #     avg_loss_stats[l].update(
-            #         loss_stats[l].mean().item(), batch['input'].size(0))
+            for l in avg_loss_stats:
+                avg_loss_stats[l].update(
+                    loss_stats[l].mean().item(), batch['input'].size(0))
             #     print('{} | {:.4f}'.format(l, avg_loss_stats[l].avg))
                 # Bar.suffix = Bar.suffix + '|{} {:.4f} '.format(l, avg_loss_stats[l].avg)
             # if not opt.hide_data_time:
