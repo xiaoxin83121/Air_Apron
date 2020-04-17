@@ -117,7 +117,7 @@ def ctdet_decode(heat, wh, reg=None, cat_spec_wh=False, K=100):
 def _topk(scores, K=40):
     batch, cat, height, width = scores.size()
 
-    topk_scores, topk_inds = torch.topk(scores.view(batch, cat, -1), K)
+    topk_scores, topk_inds = torch.topk(scores.contiguous().view(batch, cat, -1), K)
 
     topk_inds = topk_inds % (height * width)
     topk_ys = (topk_inds / width).int().float()
