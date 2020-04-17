@@ -76,7 +76,7 @@ class Detector(object):
             reg = output['reg'] if self.opt.reg_offset else None
             torch.cuda.synchronize()
             forward_time = time.time()
-            dets = decode.ctdet_decode(hm, wh, reg, cat_spec_wh=self.opt.cat_spec_with, K=self.opt.K)
+            dets = decode.ctdet_decode(hm, wh, reg, cat_spec_wh=self.opt.cat_spec_wh, K=self.opt.K)
         if return_time:
             return output, dets, forward_time
         else:
@@ -134,7 +134,7 @@ class Detector(object):
             else:
                 images = pre_processed_images['images'][scale][0]
                 meta = pre_processed_images['meta'][scale]
-                meta = {k: v.numpy() for k, v in meta.items()}
+                meta = {k: v.numpy()[0] for k, v in meta.items()}
             images = images.to(self.opt.device)
             torch.cuda.synchronize()
             pre_process_time = time.time()
