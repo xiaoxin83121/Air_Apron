@@ -88,7 +88,7 @@ def plane_pose(inputs):
         cls = inp['class']
         if cls in plane_dict.keys():
             plane_dict[cls].append(inp)
-    print(plane_dict)
+    # print(plane_dict)
 
     # 判断飞机主体是否存在
     if len(plane_dict['plane']) < 1:
@@ -126,11 +126,11 @@ def plane_pose(inputs):
 
 
     horizon = -1
-    ground = -1
+    ground = [-1, -1]
     if plane_exist:
         if len(plane_dict['engine']) >= 2:
-            engine1 = plane_dict['engine'][0]
-            engine2 = plane_dict['engine'][1]
+            engine1 = plane_dict['engine'][0]['center']
+            engine2 = plane_dict['engine'][1]['center']
             dividend = ( abs(engine1[1] - engine2[1]) ) / ( abs(engine1[0] - engine2[0]) )
             horizon = math.atan(dividend)
         if len(plane_dict['wheel']) >= 1:
@@ -156,7 +156,7 @@ def single_process(inputs):
     cls = set()
     for inp in inputs:
         cls.add(inp['class'])
-    print(cls)
+    # print(cls)
     empty_dict = {'class':'', 'bbox':[], 'center':[0, 0], 'size': [0, 0]}
     is_oilcar = True if 'oil_car' in cls else False
     is_stair = True if 'stair' in cls else False
@@ -178,7 +178,7 @@ def mul_process(inputs):
     queue_list = []
     bus_list = []
     person_ids = []
-    count = 0
+    # count = 0
     for inp in inputs:
         cls.add(inp['class'])
         if inp['class'] == 'person':
@@ -187,7 +187,7 @@ def mul_process(inputs):
             queue_list.append(inp)
         if inp['class'] == 'bus':
             bus_list.append(inp)
-    print(cls)
+    # print(cls)
     is_bus = True if 'bus' in cls else False
     is_person = True if 'person' in cls else False
     is_queue = True if 'queue' in cls else False
@@ -195,7 +195,9 @@ def mul_process(inputs):
     uncount_set = set()
     for i in range(len(person_list)):
         uncount_set.add(i)
-    seed = uncount_set.pop()
+    seed = 0
+    if not (not uncount_set):
+        seed = uncount_set.pop()
     while not (not uncount_set):
         ids, uncount_set = dfs(seed, person_list, uncount_set)
         if len(ids) >= People_Num:
@@ -216,10 +218,11 @@ def mul_process(inputs):
             }
             queue_list.append(dic)
         else:
-            person_ids.append(ids)
+            for id in ids:
+                person_ids.append(id)
         seed = uncount_set.pop()
 
-    is_queue = is_queue and count >= People_Num
+    is_queue = is_queue and len(queue_list) > 0
     res = {
         'is_bus': is_bus, 'bus': bus_list,
         'is_person': is_person, 'person': person_list, 'person_ids': person_ids,
@@ -241,7 +244,7 @@ def safe_area(inputs):
     if steady_list['is_plane']:
         cone_set = list()
         plane_center = steady_list['plane']['center']
-        ground_center = steady_list['ground']['center']
+        ground_center = steady_list['plane']['ground']
         center = [(plane_center[0] + ground_center[0]) // 2, (plane_center[1] + ground_center[1]) // 2]
         # 将检测到的cone和center做对称，计算相应的cone集合
         for cone in cone_list:

@@ -2,10 +2,12 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
+
 """
 数据增广
 """
 import os
+import sys
 import xml.etree.ElementTree as ET
 import numpy as np
 import cv2
@@ -14,26 +16,35 @@ import pandas as pd
 from classify.pre_process import single_process, mul_process, cal_distance, safe_area
 
 
+
+def res2vec(res, pos_res, size_res):
+    sample = list(res.values())
+    for p in pos_res:
+        sample.append(p[0])
+        sample.append(p[1])
+    for s in size_res:
+        sample.append(s[0])
+        sample.append(s[1])
+    return sample
+
 def generate_dataset(dir):
     # 从data中获取事件检测所用的数据集
     samples = []
     labels = []
     file_path = os.path.join(dir, 'sequence1.csv')
     sequence = pd.read_csv(file_path).values
-    length = len(sequence)
-    for i in range(length):
-        sample = generate_test('data/VOC2007/Annotations/', i)
-        res, pos_res, size_res = merge(sample, single_process(sample))
-        sample = res.values()
-        for p in pos_res:
-            sample.append(p[0])
-            sample.append(p[1])
-        for s in size_res:
-            sample.append(s[0])
-            sample.append(s[1])
-        label = sequence[i]
-        samples.append(sample)
+    frame_sequence = set()
+    for s in sequence:
+        label = [int(siter) for siter in s[0].split('\t')]
         labels.append(label)
+        frame_sequence.add(label[0])
+    # print(len(frame_sequence))
+    length = len(frame_sequence)
+    for i in range(length):
+        sample = generate_test(os.path.join(dir, 'Annotations'), i)
+        res, pos_res, size_res = merge(sample, single_process(sample))
+        sample = res2vec(res, pos_res, size_res)
+        samples.append(sample)
     return samples, labels
 
 
@@ -85,16 +96,19 @@ def generate_test(dirs, indexs):
 
 
 def ver_dis(point, line_set):
-    # vertical distance from point to
+    # vertical distance from point to lines
     diss = []
-    for line in line_set:
-        k = (line[0][1] - line[1][1]) / (line[0][0] - line[1][0])
-        A = -k
-        C = k * line[0][0] - line[0][1]
-        dis = abs(A * point[0] + point[1] + C) / \
-            math.sqrt(A**2 + 1)
+    for line in line_set['area']:
+        if line[0][0] - line[1][0] <= 1:
+            dis = abs(point[0] - line[0][0])
+        else:
+            k = (line[0][1] - line[1][1]) / (line[0][0] - line[1][0])
+            A = -k
+            C = k * line[0][0] - line[0][1]
+            dis = abs(A * point[0] + point[1] + C) / \
+                math.sqrt(A**2 + 1)
         diss.append(dis)
-    return min(diss), max(diss)
+    return min(diss) if not (not diss) else -1, max(diss) if not (not diss) else -1
 
 def merge(inputs, sgl):
     # para:inputs is the result of object detection per frame
@@ -151,12 +165,19 @@ def data_augument(seq_dir, anno_dir, csv_name):
     # 对数据集进行数据增广
     seq_path = os.path.join(seq_dir, csv_name)
     sequence = pd.read_csv(seq_path).values
-    state = 0
+    frame_sequence = set()
+    labels = []
     samples = []
-    for i in range(len(sequence)):
+    for s in sequence:
+        label = [int(siter) for siter in s[0].split('\t')]
+        labels.append(label)
+        frame_sequence.add(label[0])
+    length = len(frame_sequence)
+    state = 0
+    for i in range(length):
         sample = generate_test(anno_dir, i)
         sgl = single_process(sample)
-        res, pos_res = merge(sample, sgl)
+        res, pos_res, size_res = merge(sample, sgl)
         if res['is_bus'] == 1:
             state = 1
         if res['is_stair'] == 0:
@@ -164,10 +185,11 @@ def data_augument(seq_dir, anno_dir, csv_name):
         if res['is_plane'] == 0:
             state = 0
         interim_vec = generate_interim_vector(state, sample)
+        # print('iv={} sample={}'.format(interim_vec, sample))
         sample = recur_sample_label(interim_vec, sample)
         samples.append(sample)
-    print(sequence)
-    return {'samples': samples, 'sequence': sequence}
+    # print(sequence)
+    return {'samples': samples, 'sequence': labels}
 
 
 def generate_interim_vector(state, sample):
@@ -177,12 +199,12 @@ def generate_interim_vector(state, sample):
     """
     # 不同阶段的噪声控制normal参数 [avg=0, var]
     state_p_dict = [
-        [25, 100],
-        [9, 36],
-        [64, 400]
+        [4, 36],
+        [1, 4],
+        [9, 64]
     ]
     on_off_dict = [
-        0.95, 0.9, 0.98
+        0.975, 0.99, 0.985
     ]
 
     interim_vec_sample = []
@@ -192,9 +214,9 @@ def generate_interim_vector(state, sample):
     on_off = []
     for r in np.random.random(length):
         on_off.append(1 if r > on_off_dict[state] else 0)
-    print(guassian_center)
-    print(guassian_size)
-    print(on_off)
+    # print(guassian_center)
+    # print(guassian_size)
+    # print(on_off)
     for iter in range(length):
         iter_dic = dict()
         iter_dic['on_off'] = on_off[iter]
@@ -205,15 +227,26 @@ def generate_interim_vector(state, sample):
 
 
 def recur_sample_label(interim_vec, samples):
-    length = len(samples)
-    for iter in range(length):
+    print(samples)
+    iter = 0
+    while(iter < len(samples)):
         vec = interim_vec[iter]
         sample = samples[iter]
-        if vec['on_off'] == 0:
+        if vec['on_off'] == 1:
             del samples[iter]
         else:
             center_bias = vec['center_bias']
             size_bias = vec['size_bias']
-            sample['center'] = [ sample['center'][0]+center_bias[0], sample['center'][1]+center_bias[1] ]
-            sample['size'] = [ sample['size'][0]+size_bias[0], sample['size'][1]+size_bias[1] ]
+            sample['center'] = [ int(sample['center'][0]+center_bias[0]), int(sample['center'][1]+center_bias[1]) ]
+            sample['size'] = [ int(sample['size'][0]+size_bias[0]), int(sample['size'][1]+size_bias[1]) ]
+            iter += 1
     return samples
+
+
+if __name__ == "__main__":
+    # test function
+    # samples, labels = generate_dataset('../../data/VOC2007_new')
+    # print('len_s={} len_l={}'.format(len(samples), len(labels)))
+    res = data_augument(seq_dir='../../data/VOC2007_new', anno_dir='../../data/VOC2007_new/Annotations',
+                        csv_name='sequence1.csv')
+    print(res)
