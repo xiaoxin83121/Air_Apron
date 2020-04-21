@@ -19,6 +19,8 @@ from classify.pre_process import single_process, mul_process, cal_distance, safe
 
 def res2vec(res, pos_res, size_res):
     sample = list(res.values())
+    pos_res = list(pos_res.values())
+    size_res = list(size_res.values())
     for p in pos_res:
         sample.append(p[0])
         sample.append(p[1])
@@ -45,7 +47,7 @@ def generate_dataset(dir):
         res, pos_res, size_res = merge(sample, single_process(sample))
         sample = res2vec(res, pos_res, size_res)
         samples.append(sample)
-    return samples, labels
+    return samples, labels, length
 
 
 def generate_test(dirs, indexs):
@@ -149,8 +151,10 @@ def merge(inputs, sgl):
         'pb1': pb[0], 'pb2': pb[1],
         'pq1': pq[0], 'pq2': pq[1],
         'pp1': pp[0], 'pp2': pp[1], 'pp3': pp[2], 'pp4': pp[3], 'pp5': pp[4],
-        'pplane': sgl['plane']['center'], 'po': sgl['oil_car']['center'],
-        'ps': sgl['stair']['center'], 'pt': sgl['traction']['center']
+        'pplane': sgl['plane']['center'] if sgl['is_plane'] else [-1, -1],
+        'po': sgl['oil_car']['center'] if sgl['is_oil_car'] else [-1,-1],
+        'ps': sgl['stair']['center'] if sgl['is_stair'] else [-1,-1],
+        'pt': sgl['traction']['center'] if sgl['is_traction'] else [-1,-1]
     }
     size_res = {
         'sp': sgl['plane']['size'] if sgl['is_plane'] else [-1,-1],
@@ -227,7 +231,7 @@ def generate_interim_vector(state, sample):
 
 
 def recur_sample_label(interim_vec, samples):
-    print(samples)
+    # print(samples)
     iter = 0
     while(iter < len(samples)):
         vec = interim_vec[iter]

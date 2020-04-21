@@ -92,7 +92,7 @@ def plane_pose(inputs):
 
     # 判断飞机主体是否存在
     if len(plane_dict['plane']) < 1:
-        print("No plane detected")
+        # print("No plane detected")
         plane = None
         plane_exist = False
     else:
@@ -105,7 +105,7 @@ def plane_pose(inputs):
     if len(plane_dict['head']) < 1:
         if not plane_exist:
             plane_exist = False
-            print("No plane and No head!")
+            # print("No plane and No head!")
             center = [-1, -1]
         # 否则按照原先的plane位置
     else:

@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import os
+from torchsummary import summary
 
 class Rnn(nn.Module):
     def __init__(self, inp_size, out_size):
@@ -29,7 +30,8 @@ class Rnn(nn.Module):
         for step in range(r_out.size(1)):
             outs.append(self.linear(r_out[:, step, :])) # shape: batch_size*hidden_size -> batch_size*out_size
 
-        return torch.stack(outs, dim=self.out_size), h_n # shape: out_size*batch_size
+        # return torch.stack(outs, dim=self.out_size), h_n # shape: out_size*batch_size
+        return outs, h_n
 
 def rnn_train(inps, labels, save_dir, iter_num=1000, inp_size=10, out_size=2):
     rnn = Rnn(inp_size=inp_size, out_size=out_size)
@@ -38,8 +40,9 @@ def rnn_train(inps, labels, save_dir, iter_num=1000, inp_size=10, out_size=2):
     # eg: 2个batch:一个batch5个sque:一个sque5个dim
     sample = np.array(inps, dtype=np.float32)
     label = np.array(labels, dtype=np.int8)
-    label = label.transpose()
-
+    # print(label.shape)
+    label = label.transpose((2, 0, 1))
+    # print(label.shape)
     x = Variable(torch.Tensor(sample).type(torch.FloatTensor))
     # y = Variable(torch.Tensor(label).type(torch.IntTensor))
 
@@ -47,14 +50,15 @@ def rnn_train(inps, labels, save_dir, iter_num=1000, inp_size=10, out_size=2):
     # loss_func = nn.MultiLabelSoftMarginLoss()
     # loss_func = nn.MultiLabelMarginLoss()
     loss_func = nn.CrossEntropyLoss()
+    # summary(rnn, (10, 55), batch_size=sample.shape[0])
 
     h_n = None
     for iter in range(iter_num):
         prediction, h_n = rnn(x, h_n)
-        h_n = h_n.data
-
+        prediction = np.array(prediction).transpose()
         losses = []
         for i in range(out_size):
+            # print('p={} | l={}\n'.format(prediction[i], label[i]))
             losses.append(loss_func(prediction[i], label[i]))
         loss = np.mean(losses)
         print('round-'+str(iter) + '=' + str(loss))

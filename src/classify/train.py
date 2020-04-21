@@ -29,12 +29,12 @@ EVENT_DICT = {
 }
 
 
-def classify_train():
+def classify_train(dir):
     net_paras = [[INP_SIZE, OUT_SIZE, 10, 5, 0, 0.5], [INP_SIZE, OUT_SIZE, 10, 4, 1, 0.5]]
-    samples, labels = generate_dataset('data/VOC2007/')
-    length = len(labels)
+    samples, labels, length = generate_dataset(dir)
     sequence_size = 10
     sequence_dic = {'samples_seg':[], 'labels_seg':[]}
+    # TODO：Labels是错乱的
     for i in range(length - sequence_size):
         samples_seg = samples[i:i+sequence_size]
         labels_seg = labels[i:i+sequence_size]
@@ -42,21 +42,21 @@ def classify_train():
         sequence_dic['labels_seg'].append(labels_seg)
 
     # train rnn_net
-    rnn_train(sequence_dic['samples_seg'], sequence_dic['labels_seg'], 'classify/models/rnn/',
+    rnn_train(sequence_dic['samples_seg'], sequence_dic['labels_seg'], 'models/rnn/',
               5000, INP_SIZE, OUT_SIZE)
     # eval rnn_net
 
     # train vote_net
     vn = Vote_Net(net_paras=net_paras)
-    vn.train(sequence_dic['samples_seg'], sequence_dic['labels_seg'], 'classify/models/vote/',
-             5000, INP_SIZE, OUT_SIZE)
+    # vn.train(sequence_dic['samples_seg'], sequence_dic['labels_seg'], 'classify/models/vote/',
+    #          5000, INP_SIZE, OUT_SIZE)
     # eval vate_net
 
 if __name__ == "__main__":
-    test_inps = generate_test('C:/Users/13778/workshop/gitrepos/Air_Apron/data/VOC2007/Annotations/', 100)
+    # test_inps = generate_test('C:/Users/13778/workshop/gitrepos/Air_Apron/data/VOC2007/Annotations/', 100)
     # sgl = single_process(test_inps)
     # print(sgl)
-    mul = mul_process(test_inps)
-    print(mul)
-
+    # mul = mul_process(test_inps)
+    # print(mul)
+    classify_train('../../data/VOC2007_new/')
 
