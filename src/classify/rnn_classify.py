@@ -26,44 +26,50 @@ class Rnn(nn.Module):
     def forward(self, x, h_n):
         r_out, h_n = self.rnn(x, h_n)
         # r_out.shape = batch_size*time_inp*hidden_size
-        outs = []
-        for step in range(r_out.size(1)):
-            outs.append(self.linear(r_out[:, step, :])) # shape: batch_size*hidden_size -> batch_size*out_size
-
+        # outs = []
+        # for step in range(r_out.size(1)):
+        #     out = self.linear(r_out[:, step, :]).detach().numpy()
+        #     outs.append(out) # shape: batch_size*hidden_size -> batch_size*out_size
+        outs = self.linear(r_out[:, -1, :])
         # return torch.stack(outs, dim=self.out_size), h_n # shape: out_size*batch_size
-        return outs, h_n
+        return outs, h_n # outs = batch_size*out_size
 
 def rnn_train(inps, labels, save_dir, iter_num=1000, inp_size=10, out_size=2):
     rnn = Rnn(inp_size=inp_size, out_size=out_size)
+    # TODO: dataloader
 
-    # inps和labels == np(batch_size, time_inp, feature_size)
+    # inps == np(batch_size, time_inp, feature_size)
+    # labels = np(batch_size, out_size)
     # eg: 2个batch:一个batch5个sque:一个sque5个dim
     sample = np.array(inps, dtype=np.float32)
     label = np.array(labels, dtype=np.int8)
-    # print(label.shape)
-    label = label.transpose((2, 0, 1))
-    # print(label.shape)
-    x = Variable(torch.Tensor(sample).type(torch.FloatTensor))
-    # y = Variable(torch.Tensor(label).type(torch.IntTensor))
+    x = Variable(torch.tensor(sample, dtype=torch.float32))
+    # y = torch.Tensor(label).type(torch.IntTensor)
 
     optimizer = torch.optim.Adam(rnn.parameters(), lr=0.02)
-    # loss_func = nn.MultiLabelSoftMarginLoss()
+    loss_func = nn.MultiLabelSoftMarginLoss()
     # loss_func = nn.MultiLabelMarginLoss()
-    loss_func = nn.CrossEntropyLoss()
+    # loss_func = nn.CrossEntropyLoss()
     # summary(rnn, (10, 55), batch_size=sample.shape[0])
 
     h_n = None
     for iter in range(iter_num):
         prediction, h_n = rnn(x, h_n)
-        prediction = np.array(prediction).transpose()
-        losses = []
-        for i in range(out_size):
-            # print('p={} | l={}\n'.format(prediction[i], label[i]))
-            losses.append(loss_func(prediction[i], label[i]))
-        loss = np.mean(losses)
+        # prediction = torch.transpose(prediction, 0, 1)
+        # print(prediction.shape)
+        # losses = []
+        # for i in range(out_size):
+        #     # print('p={} | l={}\n'.format(prediction[i].shape, label[i].shape))
+        #     p = torch.tensor(prediction[i], dtype=torch.float32)
+        #     l = torch.tensor(label[i], dtype=torch.long)
+        #     losses.append(loss_func(p, l))
+        # p = torch.tensor(prediction, dtype=torch.float32)
+        l = torch.tensor(label, dtype=torch.float32)
+        loss = loss_func(prediction, l)
+        # loss = np.mean(losses)
         print('round-'+str(iter) + '=' + str(loss))
         optimizer.zero_grad()
-        loss.backward()
+        loss.backward(retain_graph=True)
         optimizer.step()
 
         if (iter+1) % 5000 == 0:

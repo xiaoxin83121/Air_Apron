@@ -10,7 +10,7 @@ from classify.vote_classify import Vote_Net
 MAX_SIZE = 10
 WINDOWS = 3
 INP_SIZE = 55
-OUT_SIZE = 4
+OUT_SIZE = 3
 
 """
 event_dict record classes of event, and every event has a triple state:0 for begin;1 for end;2 for in_status
@@ -32,12 +32,12 @@ EVENT_DICT = {
 def classify_train(dir):
     net_paras = [[INP_SIZE, OUT_SIZE, 10, 5, 0, 0.5], [INP_SIZE, OUT_SIZE, 10, 4, 1, 0.5]]
     samples, labels, length = generate_dataset(dir)
+    print(labels)
     sequence_size = 10
     sequence_dic = {'samples_seg':[], 'labels_seg':[]}
-    # TODO：Labels是错乱的
     for i in range(length - sequence_size):
         samples_seg = samples[i:i+sequence_size]
-        labels_seg = labels[i:i+sequence_size]
+        labels_seg = labels[i+sequence_size]
         sequence_dic['samples_seg'].append(samples_seg)
         sequence_dic['labels_seg'].append(labels_seg)
 

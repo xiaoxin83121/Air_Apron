@@ -38,8 +38,9 @@ def generate_dataset(dir):
     frame_sequence = set()
     for s in sequence:
         label = [int(siter) for siter in s[0].split('\t')]
-        labels.append(label)
-        frame_sequence.add(label[0])
+        if label[0] not in frame_sequence:
+            frame_sequence.add(label[0])
+            labels.append(label[1:4])
     # print(len(frame_sequence))
     length = len(frame_sequence)
     for i in range(length):
