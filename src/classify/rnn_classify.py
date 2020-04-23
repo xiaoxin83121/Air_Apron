@@ -79,12 +79,13 @@ def rnn_train(inps, labels, save_dir, iter_num=1000, inp_size=10, out_size=2):
 def rnn_eval(sample_batch, label_batch, save_dir, latest_iter, inp_size=47, out_size=4):
     model = torch.load(save_dir+'rnn_'+str(latest_iter)+'.pkl')
     samples = np.array(sample_batch, dtype=np.float32)
-    labels = np.array(label_batch, dtype=np.int8)
-    labels = labels.transpose()
-    x = Variable(torch.Tensor(samples).type(torch.FloatTensor))
+    labels = np.array(label_batch, dtype=np.int8).transpose()
+    # labels = labels.transpose()
+    x = Variable(torch.tensor(samples, dtype=torch.float32))
     # y = Variable(torch.Tensor(labels).type(torch.IntTensor))
 
-    preds, _ = model(x)
+    preds, _ = model(x) # preds = batch_size* out_size
+    preds = preds.detach().numpy().transpose()
     results = []
     for i in range(out_size):
         pred = preds[i]
@@ -100,6 +101,6 @@ def rnn_demo(sample, save_dir, latest_iter):
     # input should be sequence
     model = torch.load(save_dir, 'rnn_'+str(latest_iter)+'.pkl')
     sample = np.array(sample, dtype=np.float32)
-    x = Variable(torch.Tensor(sample).type(torch.FloatTensor))
+    x = Variable(torch.tensor(sample, dtype=torch.float32))
     preds, _ = model(x)
-    return [pred[-1] for pred in preds]
+    return preds

@@ -46,22 +46,25 @@ class Vote_Net(object):
         # batch.shape = [batch_size, item_size]
         samples = np.array(sample_batch, dtype=np.float32)
         labels = np.array(label_batch, dtype=np.int8)
-        labels = labels.transpose()
-        x = Variable(torch.Tensor(samples).type(torch.FloatTensor))
+        labels = torch.tensor(labels, dtype=np.float32)
+        # labels = labels.transpose()
+        x = Variable(torch.tensor(samples, dtype=torch.float32))
         # y = Variable(torch.Tensor(labels).type(torch.IntTensor))
 
         for i in range(self.n):
             optimizer = torch.optim.Adam(self.nets[i].parameters(), lr=0.02)
-            loss_func = nn.CrossEntropyLoss()
+            # loss_func = nn.CrossEntropyLoss()
+            loss_func = nn.MultiLabelSoftMarginLoss()
 
             for iter in range(iter_num):
                 out = self.nets[i](x)
-                out = np.array(out).transpose()
+                # out = np.array(out).transpose()
 
-                losses = []
-                for i in range(out_size):
-                    losses.append(loss_func(out[i], labels[i]))
-                loss = np.mean(losses)
+                # losses = []
+                # for i in range(out_size):
+                #     losses.append(loss_func(out[i], labels[i]))
+                # loss = np.mean(losses)
+                loss = loss_func(out, labels)
                 print('round-{}={}'.format(iter, loss))
                 optimizer.zero_grad()
                 loss.backward()
@@ -80,6 +83,7 @@ class Vote_Net(object):
         # y = Variable(torch.Tensor(labels).type(torch.IntTensor))
 
         preds = model(x)
+        preds = preds.detach().numpy().transpose()
         results = []
         for i in range(out_size):
             pred = preds[i]
@@ -100,9 +104,9 @@ def vote(sample, save_dir):
     for file in files:
         model = torch.load(os.path.join(save_dir, file))
         pred = model(x)
-        preds.append(pred)
+        preds.append(pred.detach().numpy())
     preds = np.array(preds)
-    return np.argmax(np.bincount(preds))
+    return [np.argmax(np.bincount(preds[..., i])) for i in range(3)]
 
 
 
