@@ -31,7 +31,7 @@ class PascalVOC(data.Dataset):
         self.annot_path =os.path.join(self.data_dir, 'cocoformatJson', 'pascal_{}.json'.format(ann_name[split]))
         self.max_objs = 50
         self.class_name = ['__background__', 'plane', 'head', 'wheel', 'wings', 'stair',
-                           'oil_car', 'person', 'cone', 'engine', 'traction', 'bus', 'queue']
+                           'oil_car', 'person', 'cone', 'engine', 'traction', 'bus', 'queue', 'cargo']
         self._valid_ids = np.arange(1, 13, dtype=np.int32)
         self.cat_ids = {v: i for i, v in enumerate(self._valid_ids)}
         # what are these?
