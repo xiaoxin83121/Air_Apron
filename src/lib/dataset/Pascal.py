@@ -15,7 +15,7 @@ from utils.image_process import get_affine_transform, draw_msra_gaussian, \
     affine_transform, gaussian_radius, draw_dense_reg, draw_umich_gaussian
 
 class PascalVOC(data.Dataset):
-    num_classes = 12
+    num_classes = 13
     default_resolution = [1024, 576]
     # copy
     mean = np.array([0.485, 0.456, 0.406],
@@ -32,7 +32,7 @@ class PascalVOC(data.Dataset):
         self.max_objs = 50
         self.class_name = ['__background__', 'plane', 'head', 'wheel', 'wings', 'stair',
                            'oil_car', 'person', 'cone', 'engine', 'traction', 'bus', 'queue', 'cargo']
-        self._valid_ids = np.arange(1, 13, dtype=np.int32)
+        self._valid_ids = np.arange(1, 14, dtype=np.int32)
         self.cat_ids = {v: i for i, v in enumerate(self._valid_ids)}
         # what are these?
         self._data_rng = np.random.RandomState(123)
