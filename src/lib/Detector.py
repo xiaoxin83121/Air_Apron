@@ -33,7 +33,7 @@ class Detector(object):
 
         self.mean = np.array(opt.mean, dtype=np.float32).reshape(1, 1, 3)
         self.std = np.array(opt.std, dtype=np.float32).reshape(1, 1, 3)
-        self.max_per_image = 10
+        self.max_per_image = 20
         self.num_classes = opt.num_classes
         self.opt = opt
         self.scales = opt.test_scales
@@ -63,8 +63,8 @@ class Detector(object):
         images = torch.from_numpy(images)
         meta = {'c': c,
                 's': s,
-                'out_height': inp_height,
-                'out_width': inp_width
+                'out_height': inp_height // self.opt.down_ratio,
+                'out_width': inp_width // self.opt.down_ratio
                 }
         return images, meta
 

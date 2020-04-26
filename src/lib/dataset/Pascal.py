@@ -32,7 +32,7 @@ class PascalVOC(data.Dataset):
         self.max_objs = 50
         self.class_name = ['__background__', 'plane', 'head', 'wheel', 'wings', 'stair',
                            'oil_car', 'person', 'cone', 'engine', 'traction', 'bus', 'queue', 'cargo']
-        self._valid_ids = np.arange(1, 14, dtype=np.int32)
+        self._valid_ids = np.arange(1, self.num_classes+1, dtype=np.int32)
         self.cat_ids = {v: i for i, v in enumerate(self._valid_ids)}
         # what are these?
         self._data_rng = np.random.RandomState(123)
