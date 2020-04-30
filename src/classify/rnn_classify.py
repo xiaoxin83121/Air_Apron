@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import numpy as np
 import torch
+import torch.utils.data
 import torch.nn as nn
 from torch.autograd import Variable
 import os
@@ -34,8 +35,61 @@ class Rnn(nn.Module):
         # return torch.stack(outs, dim=self.out_size), h_n # shape: out_size*batch_size
         return outs, h_n # outs = batch_size*out_size
 
+class RNN_Trainer(object):
+    def __init__(self, inp_size, out_size, save_dir):
+        self.rnn = Rnn(inp_size=inp_size, out_size=out_size)
+        self.rnn = self.rnn.cuda()
+        self.optimizer = torch.optim.Adam(self.rnn.parameters(), lr=0.02)
+        self.loss_func = nn.MultiLabelSoftMarginLoss()
+        self.save_dir = save_dir
+
+
+    def train(self, dataloader, iter_num):
+        sum_loss = 0
+        for iter, batch in enumerate(dataloader):
+            for i in range(len(batch['s'])):
+                for j in range(len(batch['s'][i])):
+                    batch['s'][i][j] = batch['s'][i][j].detach().numpy().tolist()
+            for i in range(len(batch['l'])):
+                batch['l'][i] = batch['l'][i].detach().numpy().tolist()
+            sample = np.transpose(batch['s'], (2, 0, 1))
+            label = np.transpose(batch['l'], (1, 0))
+            # sample = np.array(batch['s'], dtype=np.float32)
+            # label = np.array(batch['l'], dtype=np.int8)
+            x = Variable(torch.tensor(sample, dtype=torch.float32)).cuda()
+            # x = Variable(torch.tensor(batch['s'], dtype=torch.float32)).cuda()
+            # l = torch.tensor(batch['l']).cuda()
+            h_n = None
+            prediction, h_n = self.rnn(x, h_n)
+            l = torch.tensor(label, dtype=torch.float32).cuda()
+            loss = self.loss_func(prediction, l)
+            # loss = np.mean(losses)
+            # print('round-' + str(iter) + '=' + str(loss))
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+            sum_loss += loss
+
+            if iter_num == 500:
+                torch.save(self.rnn, self.save_dir + 'rnn_' + str(iter_num + 1) + '.pkl')
+        return sum_loss / iter_num
+
+    def eval(self, dataloader):
+        pass
+
+
+
+
+
+
+
+
+
+
 def rnn_train(inps, labels, save_dir, iter_num=1000, inp_size=10, out_size=2):
     rnn = Rnn(inp_size=inp_size, out_size=out_size)
+    rnn = rnn.cuda()
     # TODO: dataloader
 
     # inps == np(batch_size, time_inp, feature_size)
@@ -43,7 +97,7 @@ def rnn_train(inps, labels, save_dir, iter_num=1000, inp_size=10, out_size=2):
     # eg: 2个batch:一个batch5个sque:一个sque5个dim
     sample = np.array(inps, dtype=np.float32)
     label = np.array(labels, dtype=np.int8)
-    x = Variable(torch.tensor(sample, dtype=torch.float32))
+    x = Variable(torch.tensor(sample, dtype=torch.float32)).cuda()
     # y = torch.Tensor(label).type(torch.IntTensor)
 
     optimizer = torch.optim.Adam(rnn.parameters(), lr=0.02)
@@ -64,20 +118,21 @@ def rnn_train(inps, labels, save_dir, iter_num=1000, inp_size=10, out_size=2):
         #     l = torch.tensor(label[i], dtype=torch.long)
         #     losses.append(loss_func(p, l))
         # p = torch.tensor(prediction, dtype=torch.float32)
-        l = torch.tensor(label, dtype=torch.float32)
+        l = torch.tensor(label, dtype=torch.float32).cuda()
         loss = loss_func(prediction, l)
         # loss = np.mean(losses)
         print('round-'+str(iter) + '=' + str(loss))
         optimizer.zero_grad()
-        loss.backward(retain_graph=True)
+        loss.backward()
         optimizer.step()
 
-        if (iter+1) % 5000 == 0:
+        if (iter+1) % iter_num == 0:
             torch.save(rnn, save_dir+'rnn_'+str(iter+1)+'.pkl')
+            return save_dir+'rnn_'+str(iter_num)+'.pkl'
 
 
-def rnn_eval(sample_batch, label_batch, save_dir, latest_iter, inp_size=47, out_size=4):
-    model = torch.load(save_dir+'rnn_'+str(latest_iter)+'.pkl')
+def rnn_eval(sample_batch, label_batch, save_dir, inp_size=47, out_size=4):
+    model = torch.load(save_dir)
     samples = np.array(sample_batch, dtype=np.float32)
     labels = np.array(label_batch, dtype=np.int8).transpose()
     # labels = labels.transpose()

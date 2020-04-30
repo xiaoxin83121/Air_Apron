@@ -192,9 +192,11 @@ def data_augument(seq_dir, anno_dir, csv_name):
         interim_vec = generate_interim_vector(state, sample)
         # print('iv={} sample={}'.format(interim_vec, sample))
         sample = recur_sample_label(interim_vec, sample)
+        # res, pos_res, size_res = merge(sample, single_process(sample))
+        # sample = res2vec(res, pos_res, size_res)
         samples.append(sample)
     # print(sequence)
-    return {'samples': samples, 'sequence': labels}
+    return {'samples': samples, 'labels': labels, 'length':length}
 
 
 def generate_interim_vector(state, sample):
@@ -254,4 +256,4 @@ if __name__ == "__main__":
     # print('len_s={} len_l={}'.format(len(samples), len(labels)))
     res = data_augument(seq_dir='../../data/VOC2007_new', anno_dir='../../data/VOC2007_new/Annotations',
                         csv_name='sequence1.csv')
-    print(res)
+    # print(res)

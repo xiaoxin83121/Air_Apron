@@ -54,7 +54,7 @@ def find_lowest(inputs):
     return index
 
 
-def dfs(id, item_list, uncount_set):
+def dfs(id, item_list, uncount_set):  # TODO:Debug
     # given an id, return the remain_uncount_set and the already count id_list
     ids = set()
     for i in uncount_set:
