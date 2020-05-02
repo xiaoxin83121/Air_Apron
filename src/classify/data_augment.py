@@ -27,6 +27,8 @@ def res2vec(res, pos_res, size_res):
     for s in size_res:
         sample.append(s[0])
         sample.append(s[1])
+
+    # TODO: normalization
     return sample
 
 def generate_dataset(dir):
@@ -40,7 +42,7 @@ def generate_dataset(dir):
         label = [int(siter) for siter in s[0].split('\t')]
         if label[0] not in frame_sequence:
             frame_sequence.add(label[0])
-            labels.append(label[1:4])
+            labels.append(label[1:4])  # TODO:modify
     # print(len(frame_sequence))
     length = len(frame_sequence)
     for i in range(length):
@@ -53,6 +55,7 @@ def generate_dataset(dir):
 
 def generate_test(dirs, indexs):
     # para:index 列表，存了读哪些xml文件; int, 存读哪个文件
+    # TODO: 无xml的情况
     res = dict()
     if isinstance(indexs, list):
         for i in indexs:
@@ -79,23 +82,26 @@ def generate_test(dirs, indexs):
     else:
         filename = str(indexs) + '.xml'
         filepath = os.path.join(dirs, filename)
-        domtree = ET.parse(filepath)
-        root = domtree.getroot()
-        objs = root.findall('object')
-        dic_index = []
-        for obj in objs:
-            cls = obj.find('name').text
-            bndbox = obj.find('bndbox')
-            xmin = int(bndbox.find('xmin').text)
-            ymin = int(bndbox.find('ymin').text)
-            xmax = int(bndbox.find('xmax').text)
-            ymax = int(bndbox.find('ymax').text)
-            size = [xmax - xmin, ymax - ymin]
-            center = [xmax - size[0] // 2, ymax - size[1] // 2]
-            bbox = [[xmin, ymin], [xmin, ymax], [xmax, ymin], [xmax, ymax]]
-            dic = {'class': cls, 'bbox': bbox, 'center': center, 'size': size}
-            dic_index.append(dic)
-        return dic_index
+        try:
+            domtree = ET.parse(filepath)
+            root = domtree.getroot()
+            objs = root.findall('object')
+            dic_index = []
+            for obj in objs:
+                cls = obj.find('name').text
+                bndbox = obj.find('bndbox')
+                xmin = int(bndbox.find('xmin').text)
+                ymin = int(bndbox.find('ymin').text)
+                xmax = int(bndbox.find('xmax').text)
+                ymax = int(bndbox.find('ymax').text)
+                size = [xmax - xmin, ymax - ymin]
+                center = [xmax - size[0] // 2, ymax - size[1] // 2]
+                bbox = [[xmin, ymin], [xmin, ymax], [xmax, ymin], [xmax, ymax]]
+                dic = {'class': cls, 'bbox': bbox, 'center': center, 'size': size}
+                dic_index.append(dic)
+            return dic_index
+        except Exception as e:
+            return []
 
 
 def ver_dis(point, line_set):
@@ -120,11 +126,11 @@ def merge(inputs, sgl):
     # bus*2 & queue*2 & person*5
     bus_list = mul['bus']
     queue_list = mul['queue']
-    pb =[[-1, -1], [-1, -1]]
-    pq = [[-1, -1], [-1, -1]]
-    pp = [[-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1]]
-    dps_min = [-1, -1, -1, -1, -1]
-    dps_max = [-1, -1, -1, -1, -1]
+    pb =[[0, 0], [0, 0]]
+    pq = [[0, 0], [0, 0]]
+    pp = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+    dps_min = [0, 0, 0, 0, 0]
+    dps_max = [0, 0, 0, 0, 0]
     for i in range(min(2, len(bus_list))):
         pb[i] = bus_list[i]['center']
     for i in range(min(2, len(queue_list))):
@@ -138,30 +144,29 @@ def merge(inputs, sgl):
         'is_plane': 1 if sgl['is_plane'] else 0, 'is_oil_car': 1 if sgl['is_oil_car'] else 0,
         'is_stair': 1 if sgl['is_stair'] else 0, 'is_traction': 1 if sgl['is_traction'] else 0,
         'is_person': 1 if mul['is_person'] else 0, 'is_queue': 1 if mul['is_queue'] else 0,
-        'is_bus': 1 if mul['is_bus'] else 0,
-        'plane2oil': cal_distance(sgl['plane'], sgl['oil_car']) if sgl['is_plane'] and sgl['is_oil_car'] else -1,
-        'plane2stair': cal_distance(sgl['plane'], sgl['stair']) if sgl['is_plane'] and sgl['is_stair'] else -1,
-        'plane2traction': cal_distance(sgl['plane'], sgl['traction']) if sgl['is_plane'] and sgl['is_traction'] else -1,
+        'is_bus': 1 if mul['is_bus'] else 0, 'horizon': sgl['plane']['horizon'], # [arctan -pi/2~pi/2]
+        'plane2oil': cal_distance(sgl['plane'], sgl['oil_car']) if sgl['is_plane'] and sgl['is_oil_car'] else 0,
+        'plane2stair': cal_distance(sgl['plane'], sgl['stair']) if sgl['is_plane'] and sgl['is_stair'] else 0,
+        'plane2traction': cal_distance(sgl['plane'], sgl['traction']) if sgl['is_plane'] and sgl['is_traction'] else 0,
         'dps_min1': dps_min[0], 'dps_min2': dps_min[1], 'dps_min3': dps_min[2],
         'dps_min4': dps_min[3], 'dps_min5': dps_min[4],
         'dps_max1': dps_max[0], 'dps_max2': dps_max[1], 'dps_max3': dps_max[2],
-        'dps_max4': dps_max[3], 'dps_max5': dps_max[4],
-        'horizon': sgl['plane']['horizon']
+        'dps_max4': dps_max[3], 'dps_max5': dps_max[4]
     }
     pos_res = {
         'pb1': pb[0], 'pb2': pb[1],
         'pq1': pq[0], 'pq2': pq[1],
         'pp1': pp[0], 'pp2': pp[1], 'pp3': pp[2], 'pp4': pp[3], 'pp5': pp[4],
-        'pplane': sgl['plane']['center'] if sgl['is_plane'] else [-1, -1],
-        'po': sgl['oil_car']['center'] if sgl['is_oil_car'] else [-1,-1],
-        'ps': sgl['stair']['center'] if sgl['is_stair'] else [-1,-1],
-        'pt': sgl['traction']['center'] if sgl['is_traction'] else [-1,-1]
+        'pplane': sgl['plane']['center'] if sgl['is_plane'] else [0, 0],
+        'po': sgl['oil_car']['center'] if sgl['is_oil_car'] else [0, 0],
+        'ps': sgl['stair']['center'] if sgl['is_stair'] else [0, 0],
+        'pt': sgl['traction']['center'] if sgl['is_traction'] else [0, 0]
     }
     size_res = {
-        'sp': sgl['plane']['size'] if sgl['is_plane'] else [-1,-1],
-        'so': sgl['oil_car']['size'] if sgl['is_oil_car'] else [-1,-1],
-        'ss': sgl['stair']['size'] if sgl['is_stair'] else [-1,-1],
-        'st': sgl['traction']['size'] if sgl['is_traction'] else [-1,-1]
+        'sp': sgl['plane']['size'] if sgl['is_plane'] else [0, 0],
+        'so': sgl['oil_car']['size'] if sgl['is_oil_car'] else [0, 0],
+        'ss': sgl['stair']['size'] if sgl['is_stair'] else [0, 0],
+        'st': sgl['traction']['size'] if sgl['is_traction'] else [0, 0]
     }
     return res, pos_res, size_res
 
@@ -192,8 +197,8 @@ def data_augument(seq_dir, anno_dir, csv_name):
         interim_vec = generate_interim_vector(state, sample)
         # print('iv={} sample={}'.format(interim_vec, sample))
         sample = recur_sample_label(interim_vec, sample)
-        # res, pos_res, size_res = merge(sample, single_process(sample))
-        # sample = res2vec(res, pos_res, size_res)
+        res, pos_res, size_res = merge(sample, single_process(sample))
+        sample = res2vec(res, pos_res, size_res)
         samples.append(sample)
     # print(sequence)
     return {'samples': samples, 'labels': labels, 'length':length}

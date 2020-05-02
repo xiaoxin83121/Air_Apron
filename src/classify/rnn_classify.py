@@ -43,9 +43,8 @@ class RNN_Trainer(object):
         self.loss_func = nn.MultiLabelSoftMarginLoss()
         self.save_dir = save_dir
 
-
     def train(self, dataloader, iter_num):
-        sum_loss = 0
+        losses = []
         for iter, batch in enumerate(dataloader):
             for i in range(len(batch['s'])):
                 for j in range(len(batch['s'][i])):
@@ -54,29 +53,37 @@ class RNN_Trainer(object):
                 batch['l'][i] = batch['l'][i].detach().numpy().tolist()
             sample = np.transpose(batch['s'], (2, 0, 1))
             label = np.transpose(batch['l'], (1, 0))
-            # sample = np.array(batch['s'], dtype=np.float32)
-            # label = np.array(batch['l'], dtype=np.int8)
             x = Variable(torch.tensor(sample, dtype=torch.float32)).cuda()
-            # x = Variable(torch.tensor(batch['s'], dtype=torch.float32)).cuda()
-            # l = torch.tensor(batch['l']).cuda()
             h_n = None
             prediction, h_n = self.rnn(x, h_n)
             l = torch.tensor(label, dtype=torch.float32).cuda()
             loss = self.loss_func(prediction, l)
-            # loss = np.mean(losses)
-            # print('round-' + str(iter) + '=' + str(loss))
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-
-            sum_loss += loss
-
-            if iter_num == 500:
+            print("Epoch {}/Iter {}: Loss={}".format(iter_num, iter, loss))
+            # sum_loss += loss
+            losses.append(loss)
+            if iter_num + 1 == 500:
                 torch.save(self.rnn, self.save_dir + 'rnn_' + str(iter_num + 1) + '.pkl')
-        return sum_loss / iter_num
 
-    def eval(self, dataloader):
-        pass
+        return losses
+
+    def eval(self, dataloader, path=""):
+        rnn = self.rnn if path=="" else torch.load(path)
+        for iter, batch in enumerate(dataloader):
+            for i in range(len(batch['s'])):
+                for j in range(len(batch['s'][i])):
+                    batch['s'][i][j] = batch['s'][i][j].detach().numpy().tolist()
+            for i in range(len(batch['l'])):
+                batch['l'][i] = batch['l'][i].detach().numpy().tolist()
+            sample = np.transpose(batch['s'], (2, 0, 1))
+            label = np.transpose(batch['l'], (1, 0))
+            x = Variable(torch.tensor(sample, dtype=torch.float32)).cuda()
+            h_n = None
+            prediction, h_n = rnn(x, h_n)
+            prediction = prediction.detach().cpu().numpy()
+            # compare prediction with label
 
 
 
@@ -90,7 +97,6 @@ class RNN_Trainer(object):
 def rnn_train(inps, labels, save_dir, iter_num=1000, inp_size=10, out_size=2):
     rnn = Rnn(inp_size=inp_size, out_size=out_size)
     rnn = rnn.cuda()
-    # TODO: dataloader
 
     # inps == np(batch_size, time_inp, feature_size)
     # labels = np(batch_size, out_size)
@@ -102,9 +108,6 @@ def rnn_train(inps, labels, save_dir, iter_num=1000, inp_size=10, out_size=2):
 
     optimizer = torch.optim.Adam(rnn.parameters(), lr=0.02)
     loss_func = nn.MultiLabelSoftMarginLoss()
-    # loss_func = nn.MultiLabelMarginLoss()
-    # loss_func = nn.CrossEntropyLoss()
-    # summary(rnn, (10, 55), batch_size=sample.shape[0])
 
     h_n = None
     for iter in range(iter_num):
@@ -158,4 +161,4 @@ def rnn_demo(sample, save_dir, latest_iter):
     sample = np.array(sample, dtype=np.float32)
     x = Variable(torch.tensor(sample, dtype=torch.float32))
     preds, _ = model(x)
-    return preds
+    return preds.detach().numpy()

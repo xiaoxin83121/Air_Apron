@@ -5,6 +5,7 @@ from __future__ import absolute_import
 import os
 import torch.utils.data
 import torch
+import time
 from classify.pre_process import single_process, mul_process, safe_area, cal_distance
 from classify.data_augment import generate_dataset, generate_test, merge, data_augument
 from classify.rnn_classify import rnn_train, rnn_eval, rnn_demo, RNN_Trainer
@@ -40,7 +41,6 @@ class SequenceDataset(torch.utils.data.Dataset):
             label_seg = labels[i+sequence_size]
             self.sequences.append(sequence_seg)
             self.labels.append(label_seg)
-        # print(self.sequences)
 
     def __getitem__(self, item):
         s = self.sequences[item]
@@ -58,32 +58,20 @@ def classify_train(dir):
     train_dataset = SequenceDataset(samples, labels, length, sequence_size)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=5, shuffle=True)
 
-    # sequence_dic = {'samples_seg':[], 'labels_seg':[]}
-    # for i in range(length - sequence_size):
-    #     samples_seg = samples[i:i+sequence_size]
-    #     labels_seg = labels[i+sequence_size]
-    #     sequence_dic['samples_seg'].append(samples_seg)
-    #     sequence_dic['labels_seg'].append(labels_seg)
-
     res = data_augument(seq_dir='../../data/VOC2007_new', anno_dir='../../data/VOC2007_new/Annotations',
                         csv_name='sequence1.csv')
-    # test_dataset = SequenceDataset(res['samples'], res['labels'], res['length'], sequence_size)
-    # test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False)
-
-    # sequence_dic_test = {'samples_seg': [], 'labels_seg': []}
-    # for i in range(res['length'] - sequence_size):
-    #     samples_seg_test = res['samples'][i:i + sequence_size]
-    #     labels_seg_test = res['labels'][i + sequence_size]
-    #     sequence_dic_test['samples_seg'].append(samples_seg_test)
-    #     sequence_dic_test['labels_seg'].append(labels_seg_test)
+    test_dataset = SequenceDataset(res['samples'], res['labels'], res['length'], sequence_size)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False)
 
     # train rnn_net
     trainer = RNN_Trainer(INP_SIZE, OUT_SIZE, 'models/rnn/')
     num_epochs = 500
-    for epoch in range(num_epochs):
-        loss = trainer.train(train_loader, epoch)
-        print("Epoch {}: Loss={:4f}".format(epoch, loss))
+    start_time = time.time()
+    # for epoch in range(num_epochs):
+    #     loss = trainer.train(train_loader, epoch)
+    # print("total time use:{}".format(time.time()-start_time))
 
+    trainer.eval(test_loader, path="models/rnn/rnn_500.pkl")
     # rnn_pkl = rnn_train(sequence_dic['samples_seg'], sequence_dic['labels_seg'], 'models/rnn/',
     #           1000, INP_SIZE, OUT_SIZE)
     # eval rnn_net
@@ -94,8 +82,8 @@ def classify_train(dir):
 
 
     # train vote_net
-    vn = Vote_Net(net_paras=net_paras)
-    # vn.train(sequence_dic['samples_seg'], sequence_dic['labels_seg'], 'classify/models/vote/',
+    # vn = Vote_Net(net_paras=net_paras)
+    # vn.train(sequence_dic['samples_seg';p'], sequence_dic['labels_seg'], 'classify/models/vote/',
     #          5000, INP_SIZE, OUT_SIZE)
     # eval vate_net
 

@@ -54,11 +54,12 @@ def find_lowest(inputs):
     return index
 
 
-def dfs(id, item_list, uncount_set):  # TODO:Debug
+def dfs(id, item_list, uncount_set):
     # given an id, return the remain_uncount_set and the already count id_list
     ids = set()
-    for i in uncount_set:
-        if cal_distance(item_list[id], item_list[i]) <= person_Distance and id != i:
+    iter_set = uncount_set.copy()
+    for i in iter_set:
+        if cal_distance(item_list[id], item_list[i]) <= person_Distance and id != i and i in uncount_set:
             uncount_set.remove(i)
             rids, uncount_set = dfs(i, item_list, uncount_set)
             ids = set.union(rids, ids)
@@ -125,8 +126,8 @@ def plane_pose(inputs):
                 plane['size'] = [new_width * 2, new_height * 2]
 
 
-    horizon = -1
-    ground = [-1, -1]
+    horizon = 0
+    ground = [0, 0]
     if plane_exist:
         if len(plane_dict['engine']) >= 2:
             engine1 = plane_dict['engine'][0]['center']
@@ -220,7 +221,8 @@ def mul_process(inputs):
         else:
             for id in ids:
                 person_ids.append(id)
-        seed = uncount_set.pop()
+        if not (not uncount_set):
+            seed = uncount_set.pop()
 
     is_queue = is_queue and len(queue_list) > 0
     res = {
