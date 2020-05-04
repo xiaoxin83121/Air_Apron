@@ -55,7 +55,6 @@ def generate_dataset(dir):
 
 def generate_test(dirs, indexs):
     # para:index 列表，存了读哪些xml文件; int, 存读哪个文件
-    # TODO: 无xml的情况
     res = dict()
     if isinstance(indexs, list):
         for i in indexs:

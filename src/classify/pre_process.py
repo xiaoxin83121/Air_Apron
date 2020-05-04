@@ -153,7 +153,7 @@ def plane_pose(inputs):
     return res, plane_exist
 
 
-def single_process(inputs):
+def single_process(inputs): # TODO: add cargo
     cls = set()
     for inp in inputs:
         cls.add(inp['class'])

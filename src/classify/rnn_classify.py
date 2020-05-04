@@ -40,7 +40,7 @@ class RNN_Trainer(object):
         self.rnn = Rnn(inp_size=inp_size, out_size=out_size)
         self.rnn = self.rnn.cuda()
         self.optimizer = torch.optim.Adam(self.rnn.parameters(), lr=0.02)
-        self.loss_func = nn.MultiLabelSoftMarginLoss()
+        self.loss_func = nn.MultiLabelSoftMarginLoss() # TODO: New loss function
         self.save_dir = save_dir
 
     def train(self, dataloader, iter_num):
@@ -83,7 +83,7 @@ class RNN_Trainer(object):
             h_n = None
             prediction, h_n = rnn(x, h_n)
             prediction = prediction.detach().cpu().numpy()
-            # compare prediction with label
+            # TODO: compare prediction with label
 
 
 
