@@ -27,6 +27,7 @@ class Rnn(nn.Module):
     def forward(self, x, h_n):
         r_out, h_n = self.rnn(x, h_n)
         # r_out.shape = batch_size*time_inp*hidden_size
+
         # outs = []
         # for step in range(r_out.size(1)):
         #     out = self.linear(r_out[:, step, :]).detach().numpy()
@@ -40,7 +41,8 @@ class RNN_Trainer(object):
         self.rnn = Rnn(inp_size=inp_size, out_size=out_size)
         self.rnn = self.rnn.cuda()
         self.optimizer = torch.optim.Adam(self.rnn.parameters(), lr=0.02)
-        self.loss_func = nn.MultiLabelSoftMarginLoss() # TODO: New loss function
+        # self.loss_func = nn.MultiLabelSoftMarginLoss() # TODO: New loss function
+        self.loss_func = nn.BCELoss()
         self.save_dir = save_dir
 
     def train(self, dataloader, iter_num):
@@ -53,10 +55,13 @@ class RNN_Trainer(object):
                 batch['l'][i] = batch['l'][i].detach().numpy().tolist()
             sample = np.transpose(batch['s'], (2, 0, 1))
             label = np.transpose(batch['l'], (1, 0))
+            # print(label.shape)
             x = Variable(torch.tensor(sample, dtype=torch.float32)).cuda()
             h_n = None
             prediction, h_n = self.rnn(x, h_n)
             l = torch.tensor(label, dtype=torch.float32).cuda()
+            # print(prediction.detach().cpu().numpy().shape)
+            prediction = nn.Sigmoid()(prediction)
             loss = self.loss_func(prediction, l)
             self.optimizer.zero_grad()
             loss.backward()
@@ -71,6 +76,7 @@ class RNN_Trainer(object):
 
     def eval(self, dataloader, path=""):
         rnn = self.rnn if path=="" else torch.load(path)
+        rets = []
         for iter, batch in enumerate(dataloader):
             for i in range(len(batch['s'])):
                 for j in range(len(batch['s'][i])):
@@ -78,13 +84,20 @@ class RNN_Trainer(object):
             for i in range(len(batch['l'])):
                 batch['l'][i] = batch['l'][i].detach().numpy().tolist()
             sample = np.transpose(batch['s'], (2, 0, 1))
-            label = np.transpose(batch['l'], (1, 0))
+            label = np.transpose(batch['l'], (1, 0)).tolist()
             x = Variable(torch.tensor(sample, dtype=torch.float32)).cuda()
             h_n = None
             prediction, h_n = rnn(x, h_n)
-            prediction = prediction.detach().cpu().numpy()
+            prediction = nn.Sigmoid()(prediction)
+            prediction = prediction.detach().cpu().numpy().tolist()
+            for p in prediction:
+                p = 1 if p>=0.5 else 0
             # TODO: compare prediction with label
-
+            ret = []
+            for i in range(8):
+                ret.append(1 if prediction[2*i : 2*i+2]==label[2*i : 2*i+2] else 0)
+            rets.append(rets)
+        return rets
 
 
 

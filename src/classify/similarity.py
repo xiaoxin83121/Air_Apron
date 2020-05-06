@@ -17,7 +17,7 @@ class Frame_Queue(object):
         self.wind = wind
         self.q = list()  # 整个queue
         self.cache = list()  # 最近的WINDOWS个窗口
-        self.objs = ['traction', 'oil_car', 'plane', 'stair']
+        self.objs = ['traction', 'oil_car', 'plane', 'stair', 'cargo']
 
     def ins(self, inputs):
         res = single_process(inputs)

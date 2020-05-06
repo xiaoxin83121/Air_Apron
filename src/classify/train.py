@@ -12,14 +12,14 @@ from classify.rnn_classify import rnn_train, rnn_eval, rnn_demo, RNN_Trainer
 from classify.vote_classify import Vote_Net
 MAX_SIZE = 10
 WINDOWS = 3
-INP_SIZE = 55
-OUT_SIZE = 3
+INP_SIZE = 61
+OUT_SIZE = 16
 
 """
-event_dict record classes of event, and every event has a triple state:0 for begin;1 for end;2 for in_status
-event_warning: 0:events ; 1:warning; 2:preparing
-type: 0:EVENT_DICT;  1:0-警告，1-提醒，2-安全; 2:0-起飞准备，1-降落准备
-state: 0: begin; 1: in; 2: end
+event_dict record classes of event, and every event has a triple state:
+0 for begin;1 for end;2 for in_status；3 for no_event
+warning status: 0 for safe; 1 for warning; 2 for alert
+the input vector has a frame id and eight status key
 """
 
 # EVENT_DICT = {
@@ -60,16 +60,26 @@ class SequenceDataset(torch.utils.data.Dataset):
     def __len__(self):
         return self.length
 
-def classify_train(dir):
+    def add(self, sequences, labels, length, sequence_size):
+        add_length = length - sequence_size
+        self.length += add_length
+        for i in range(add_length):
+            sequence_seg = sequences[i:i + sequence_size]
+            label_seg = labels[i + sequence_size]
+            self.sequences.append(sequence_seg)
+            self.labels.append(label_seg)
+
+
+def classify_train():
     net_paras = [[INP_SIZE, OUT_SIZE, 10, 5, 0, 0.5], [INP_SIZE, OUT_SIZE, 10, 4, 1, 0.5]]
-    samples, labels, length = generate_dataset(dir)
-    # print(samples)
+    samples, labels, length = generate_dataset('../../data/VOC2007_1/', 'sequence_1.csv')
+    # print(labels)
     sequence_size = 10
     train_dataset = SequenceDataset(samples, labels, length, sequence_size)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=5, shuffle=True)
 
-    res = data_augument(seq_dir='../../data/VOC2007_new', anno_dir='../../data/VOC2007_new/Annotations',
-                        csv_name='sequence1.csv')
+    res = data_augument(seq_dir='../../data/VOC2007_1', anno_dir='../../data/VOC2007_1/Annotations',
+                        csv_name='sequence_1.csv')
     test_dataset = SequenceDataset(res['samples'], res['labels'], res['length'], sequence_size)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False)
 
@@ -77,11 +87,11 @@ def classify_train(dir):
     trainer = RNN_Trainer(INP_SIZE, OUT_SIZE, 'models/rnn/')
     num_epochs = 500
     start_time = time.time()
-    # for epoch in range(num_epochs):
-    #     loss = trainer.train(train_loader, epoch)
-    # print("total time use:{}".format(time.time()-start_time))
+    for epoch in range(num_epochs):
+        loss = trainer.train(train_loader, epoch)
+    print("total time use:{}".format(time.time()-start_time))
 
-    trainer.eval(test_loader, path="models/rnn/rnn_500.pkl")
+    # trainer.eval(test_loader, path="models/rnn/rnn_500.pkl")
     # rnn_pkl = rnn_train(sequence_dic['samples_seg'], sequence_dic['labels_seg'], 'models/rnn/',
     #           1000, INP_SIZE, OUT_SIZE)
     # eval rnn_net
@@ -103,5 +113,5 @@ if __name__ == "__main__":
     # print(sgl)
     # mul = mul_process(test_inps)
     # print(mul)
-    classify_train('../../data/VOC2007_new/')
+    classify_train()
 

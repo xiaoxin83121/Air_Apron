@@ -153,7 +153,7 @@ def plane_pose(inputs):
     return res, plane_exist
 
 
-def single_process(inputs): # TODO: add cargo
+def single_process(inputs):
     cls = set()
     for inp in inputs:
         cls.add(inp['class'])
@@ -162,10 +162,12 @@ def single_process(inputs): # TODO: add cargo
     is_oilcar = True if 'oil_car' in cls else False
     is_stair = True if 'stair' in cls else False
     is_traction = True if 'traction' in cls else False
+    is_cargo = True if 'cargo' in cls else False
     plane, is_plane = plane_pose(inputs)
     res = {
         'is_oil_car':is_oilcar, 'oil_car':find_max(inputs, 'oil_car') if is_oilcar else empty_dict,
         'is_stair': is_stair, 'stair': find_max(inputs, 'stair') if is_stair else empty_dict,
+        'is_cargo': is_cargo, 'cargo': find_max(inputs, 'cargo') if is_cargo else empty_dict,
         'is_traction': is_traction, 'traction': find_max(inputs, 'traction') if is_traction else empty_dict,
         'is_plane': is_plane, 'plane': plane,
     }

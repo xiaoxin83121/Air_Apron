@@ -18,6 +18,8 @@ from classify.pre_process import single_process, mul_process, cal_distance, safe
 
 
 def res2vec(res, pos_res, size_res):
+    dis_std = 587
+    center_std = 1024
     sample = list(res.values())
     pos_res = list(pos_res.values())
     size_res = list(size_res.values())
@@ -27,22 +29,41 @@ def res2vec(res, pos_res, size_res):
     for s in size_res:
         sample.append(s[0])
         sample.append(s[1])
-
-    # TODO: normalization
+    # split_dict means normalization regulation: value means cut_off
+    # 0 for 0-1，no need to process; 1 for arctan, add pi/2 and divided by pi
+    # 3 and 4 devided by size; 3 for 1 dimension and 4 for 2 dimension
+    split_list = [8, 9, 23, 51, 61]
+    sample[split_list[0]] = ( sample[split_list[0]] + math.pi / 2 ) / math.pi
+    for i in range(split_list[1], split_list[2]):
+        sample[i] = sample[i] / dis_std
+    for i in range(split_list[2], split_list[3]):
+        sample[i] = sample[i] / center_std
+    for i in range(split_list[3], split_list[4]):
+        sample[i] = sample[i] / dis_std
     return sample
 
-def generate_dataset(dir):
+def generate_dataset(dir, file_name):
     # 从data中获取事件检测所用的数据集
     samples = []
     labels = []
-    file_path = os.path.join(dir, 'sequence1.csv')
+    file_path = os.path.join(dir, file_name)
     sequence = pd.read_csv(file_path).values
     frame_sequence = set()
     for s in sequence:
         label = [int(siter) for siter in s[0].split('\t')]
-        if label[0] not in frame_sequence:
-            frame_sequence.add(label[0])
-            labels.append(label[1:4])  # TODO:modify
+        # if label[0] not in frame_sequence:
+        frame_sequence.add(label[0])
+        one_hot = []
+        for l in label[1:9]:
+            if l == 0:
+                one_hot += [0, 0]
+            elif l == 1:
+                one_hot += [0, 1]
+            elif l == 2:
+                one_hot += [1, 0]
+            elif l == 3:
+                one_hot += [1, 1]
+        labels.append(one_hot)
     # print(len(frame_sequence))
     length = len(frame_sequence)
     for i in range(length):
@@ -142,11 +163,15 @@ def merge(inputs, sgl):
     res = {
         'is_plane': 1 if sgl['is_plane'] else 0, 'is_oil_car': 1 if sgl['is_oil_car'] else 0,
         'is_stair': 1 if sgl['is_stair'] else 0, 'is_traction': 1 if sgl['is_traction'] else 0,
+        'is_cargo': 1 if sgl['is_cargo'] else 0,
         'is_person': 1 if mul['is_person'] else 0, 'is_queue': 1 if mul['is_queue'] else 0,
-        'is_bus': 1 if mul['is_bus'] else 0, 'horizon': sgl['plane']['horizon'], # [arctan -pi/2~pi/2]
+        'is_bus': 1 if mul['is_bus'] else 0,
+        'horizon': sgl['plane']['horizon'], # [arctan -pi/2~pi/2]
         'plane2oil': cal_distance(sgl['plane'], sgl['oil_car']) if sgl['is_plane'] and sgl['is_oil_car'] else 0,
         'plane2stair': cal_distance(sgl['plane'], sgl['stair']) if sgl['is_plane'] and sgl['is_stair'] else 0,
         'plane2traction': cal_distance(sgl['plane'], sgl['traction']) if sgl['is_plane'] and sgl['is_traction'] else 0,
+        'plane2cargo': cal_distance(sgl['plane'], sgl['cargo']) if sgl['is_plane'] and sgl['is_cargo'] else 0,
+        # person to safe_area distance
         'dps_min1': dps_min[0], 'dps_min2': dps_min[1], 'dps_min3': dps_min[2],
         'dps_min4': dps_min[3], 'dps_min5': dps_min[4],
         'dps_max1': dps_max[0], 'dps_max2': dps_max[1], 'dps_max3': dps_max[2],
@@ -159,13 +184,15 @@ def merge(inputs, sgl):
         'pplane': sgl['plane']['center'] if sgl['is_plane'] else [0, 0],
         'po': sgl['oil_car']['center'] if sgl['is_oil_car'] else [0, 0],
         'ps': sgl['stair']['center'] if sgl['is_stair'] else [0, 0],
-        'pt': sgl['traction']['center'] if sgl['is_traction'] else [0, 0]
+        'pt': sgl['traction']['center'] if sgl['is_traction'] else [0, 0],
+        'pc': sgl['cargo']['center'] if sgl['is_cargo'] else [0, 0]
     }
     size_res = {
         'sp': sgl['plane']['size'] if sgl['is_plane'] else [0, 0],
         'so': sgl['oil_car']['size'] if sgl['is_oil_car'] else [0, 0],
         'ss': sgl['stair']['size'] if sgl['is_stair'] else [0, 0],
-        'st': sgl['traction']['size'] if sgl['is_traction'] else [0, 0]
+        'st': sgl['traction']['size'] if sgl['is_traction'] else [0, 0],
+        'sc': sgl['cargo']['size'] if sgl['is_cargo'] else [0, 0]
     }
     return res, pos_res, size_res
 
@@ -179,8 +206,18 @@ def data_augument(seq_dir, anno_dir, csv_name):
     samples = []
     for s in sequence:
         label = [int(siter) for siter in s[0].split('\t')]
-        labels.append(label)
         frame_sequence.add(label[0])
+        one_hot = []
+        for l in label[1:9]:
+            if l == 0:
+                one_hot += [0, 0]
+            elif l == 1:
+                one_hot += [0, 1]
+            elif l == 2:
+                one_hot += [1, 0]
+            elif l == 3:
+                one_hot += [1, 1]
+        labels.append(one_hot)
     length = len(frame_sequence)
     state = 0
     for i in range(length):
