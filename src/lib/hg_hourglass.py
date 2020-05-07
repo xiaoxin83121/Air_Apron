@@ -48,6 +48,18 @@ class fully_connected(nn.Module):
         return relu
 
 
+class hori_pool(nn.Module):
+    def __init__(self):
+        super(hori_pool, self).__init__()
+        pass
+
+
+class verti_pool(nn.Module):
+    def __init__(self):
+        super(verti_pool, self).__init__()
+        pass
+
+
 # 结构上和ResNet(MSRA)相同
 class residual(nn.Module):
     def __init__(self, k, inp_dim, out_dim, stride=1, with_bn=True):
@@ -78,7 +90,7 @@ class residual(nn.Module):
         return self.relu(bn2 + skip)
 
 
-def make_layer(k, inp_dim, out_dim, modules, layer=convolution, **kwargs):  # 卷积
+def make_layer(k, inp_dim, out_dim, modules, layer=convolution, **kwargs):
     layers = [layer(k, inp_dim, out_dim, **kwargs)]  # 初始设置一个layer，inp是inp，out是out
     for _ in range(1, modules):
         layers.append(layer(k, out_dim, out_dim, **kwargs))  # 紧密相连，inp是out， out是out， out_dim是基准
@@ -109,26 +121,26 @@ def make_pool_layer(dim):
     return nn.Sequential()
 
 
-def make_unpool_layer(dim):  # 上采样层
+def make_unpool_layer(dim):
     return nn.Upsample(scale_factor=2)
 
 
-def make_kp_layer(cnv_dim, curr_dim, out_dim):  # 卷积
+def make_kp_layer(cnv_dim, curr_dim, out_dim):
     return nn.Sequential(
         convolution(3, cnv_dim, curr_dim, with_bn=False),
         nn.Conv2d(curr_dim, out_dim, (1, 1))
     )
 
 
-def make_inter_layer(dim):  # residual
+def make_inter_layer(dim):
     return residual(3, dim, dim)
 
 
-def make_cnv_layer(inp_dim, out_dim):  # 卷积
+def make_cnv_layer(inp_dim, out_dim):
     return convolution(3, inp_dim, out_dim)
 
 
-class kp_module(nn.Module):  # Figure3:hourglassNet unit
+class kp_module(nn.Module):  # Figure3
     def __init__(
             self, n, dims, modules, layer=residual,
             make_up_layer=make_layer, make_low_layer=make_layer,
@@ -138,7 +150,7 @@ class kp_module(nn.Module):  # Figure3:hourglassNet unit
     ):
         super(kp_module, self).__init__()
 
-        self.n = n  # n=5指的是5层递归
+        self.n = n
 
         curr_mod = modules[0]
         next_mod = modules[1]
@@ -179,12 +191,12 @@ class kp_module(nn.Module):  # Figure3:hourglassNet unit
         self.merge = make_merge_layer(curr_dim)
 
     def forward(self, x):
-        up1 = self.up1(x)  # 卷积值1
-        max1 = self.max1(x)  # 原始图像
-        low1 = self.low1(max1)  # 卷积，同up1
-        low2 = self.low2(low1)  # 递归的kp_module，第五层递归是同up1的卷积
-        low3 = self.low3(low2)  # 反卷
-        up2 = self.up2(low3)  # 上采样层
+        up1 = self.up1(x)
+        max1 = self.max1(x)
+        low1 = self.low1(max1)
+        low2 = self.low2(low1)
+        low3 = self.low3(low2)
+        up2 = self.up2(low3)
         return self.merge(up1, up2)
 
 
@@ -249,7 +261,7 @@ class exkp(nn.Module):
         for head in heads.keys():
             if 'hm' in head:
                 module = nn.ModuleList([
-                    make_heat_layer(  # make_kp_layer
+                    make_heat_layer(
                         cnv_dim, curr_dim, heads[head]) for _ in range(nstack)
                 ])
                 self.__setattr__(head, module)
@@ -293,20 +305,12 @@ def make_hg_layer(kernel, dim0, dim1, mod, layer=convolution, **kwargs):
     layers += [layer(kernel, dim1, dim1) for _ in range(mod - 1)]
     return nn.Sequential(*layers)
 
-def make_gms_layer():
-    pass
-
-def make_cms_layer():
-    pass
 
 class HourglassNet(exkp):
     def __init__(self, heads, num_stacks=2):  # remember the parameters here
         n = 5
         dims = [256, 256, 384, 384, 384, 512]
         modules = [2, 2, 2, 2, 2, 4]
-        # n = 3
-        # dims = [256, 256, 384, 512]
-        # modules = [2, 2, 2, 4]
 
         super(HourglassNet, self).__init__(
             n, num_stacks, dims, modules, heads,
