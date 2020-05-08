@@ -6,6 +6,8 @@ import os
 import torch.utils.data
 import torch
 import time
+import random
+import json
 from classify.pre_process import single_process, mul_process, safe_area, cal_distance
 from classify.data_augment import generate_dataset, generate_test, merge, data_augument
 from classify.rnn_classify import rnn_train, rnn_eval, rnn_demo, RNN_Trainer
@@ -14,6 +16,7 @@ MAX_SIZE = 10
 WINDOWS = 3
 INP_SIZE = 61
 OUT_SIZE = 16
+json_filename = '../../data/sequence.json'
 
 """
 event_dict record classes of event, and every event has a triple state:
@@ -41,8 +44,33 @@ EVENT_DICT = {
     '6': '牵引车牵引进跑道',
 }
 
+class CLogger():
+    def __init__(self, exp_id):
+        save_dir = os.path.join('models/rnn/', exp_id)
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        # save the opt as opt_log_file
+        self.log = open(os.path.join(save_dir,'log.txt'), 'w')
+        self.start_line = True
+
+    def write(self, text):
+        if self.start_line:
+            time_str = time.strftime('%Y-%m-%d-%H-%M')
+            self.log.write('{}: {}'.format(time_str, text))
+        else:
+            self.log.write(text)
+        self.start_line = False
+        if '\n' in text:
+            self.start_line = True
+            self.log.flush()
+
+    def close(self):
+        self.log.close()
+
 class SequenceDataset(torch.utils.data.Dataset):
     def __init__(self, sequences, labels, length, sequence_size):
+        self.trainset = []
+        self.testset = []
         self.sequences = []
         self.labels = []
         self.length = length - sequence_size
@@ -69,29 +97,79 @@ class SequenceDataset(torch.utils.data.Dataset):
             self.sequences.append(sequence_seg)
             self.labels.append(label_seg)
 
+    def split(self):
+        train_percent = 0.7 # 7:3划分数据集
+        num = range(self.length)
+        data_count = int(self.length * train_percent)
+        train_list = random.sample(num, data_count)
+        for i in num:
+            if i in train_list:
+                self.trainset.append({'s':self.sequences[i], 'l': self.labels[i]})
+            else:
+                self.testset.append({'s': self.sequences[i], 'l': self.labels[i]})
+        res_dic = {'train': self.trainset, 'train_len': len(self.trainset), 'test': self.testset,
+                   'test_len':len(self.testset)}
+        with open(json_filename, "w") as f:
+            json.dump(res_dic, f)
+            print("refresh sequence dataset!")
 
-def classify_train():
+
+class SonSequenceDataSet(torch.utils.data.Dataset):
+    def __init__(self, length, dataset):
+        self.length = length
+        self.dataset = dataset
+
+    def __len__(self):
+        return self.length
+
+    def __getitem__(self, item):
+        return self.dataset[item]
+
+
+def classify(split, fresh_dataset=True, exp_id=''):
+    # config
     net_paras = [[INP_SIZE, OUT_SIZE, 10, 5, 0, 0.5], [INP_SIZE, OUT_SIZE, 10, 4, 1, 0.5]]
-    samples, labels, length = generate_dataset('../../data/VOC2007_1/', 'sequence_1.csv')
-    # print(labels)
-    sequence_size = 10
-    train_dataset = SequenceDataset(samples, labels, length, sequence_size)
+    # train_data
+    if fresh_dataset:
+        samples, labels, length = generate_dataset('../../data/VOC2007_1/', 'sequence_1.csv')
+        samples2, labels2, length2 = generate_dataset('../../data/VOC2007_2/', 'sequence_2.csv')
+        samples3, labels3, length3 = generate_dataset('../../data/VOC2007_3/', 'sequence_3.csv')
+        sequence_size = 10
+        dataset = SequenceDataset(samples, labels, length, sequence_size)
+        dataset.add(samples2, labels2, length2, sequence_size)
+        dataset.add(samples3, labels3, length3, sequence_size)
+        dataset.split()
+    try:
+        load_f = open(json_filename)
+        res_dict = json.load(load_f)
+    except Exception as e:
+        print('fresh_datast should be True if json_file does not exist' )
+
+    train_dataset = SonSequenceDataSet(res_dict['train_len'], res_dict['train'])
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=5, shuffle=True)
 
-    res = data_augument(seq_dir='../../data/VOC2007_1', anno_dir='../../data/VOC2007_1/Annotations',
-                        csv_name='sequence_1.csv')
-    test_dataset = SequenceDataset(res['samples'], res['labels'], res['length'], sequence_size)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False)
+    # test_data
+    # res = data_augument(seq_dir='../../data/VOC2007_1', anno_dir='../../data/VOC2007_1/Annotations',
+    #                     csv_name='sequence_1.csv')
+    # test_dataset = SequenceDataset(res['samples'], res['labels'], res['length'], sequence_size)
+    test_dataset = SonSequenceDataSet(res_dict['test_len'], res_dict['test'])
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=True)
 
+    save_dir = os.path.join("models/rnn", exp_id)
+    trainer = RNN_Trainer(INP_SIZE, OUT_SIZE, save_dir)
+    logger = CLogger(exp_id)
     # train rnn_net
-    trainer = RNN_Trainer(INP_SIZE, OUT_SIZE, 'models/rnn/')
-    num_epochs = 500
-    start_time = time.time()
-    for epoch in range(num_epochs):
-        loss = trainer.train(train_loader, epoch)
-    print("total time use:{}".format(time.time()-start_time))
+    num_epochs = 2000
+    if split == 'train':
+        start_time = time.time()
+        for epoch in range(num_epochs):
+            loss = trainer.train(train_loader, epoch, logger, num_epochs)
+            print("Epoch: {} end".format(epoch))
+        logger.write("total time use:{}\n".format(time.time()-start_time))
 
-    # trainer.eval(test_loader, path="models/rnn/rnn_500.pkl")
+    res = trainer.eval(test_loader, path=os.path.join(save_dir, str(num_epochs)+".pkl"))
+    logger.write(res['percentages'])
+    print(res['percentages'])
     # rnn_pkl = rnn_train(sequence_dic['samples_seg'], sequence_dic['labels_seg'], 'models/rnn/',
     #           1000, INP_SIZE, OUT_SIZE)
     # eval rnn_net
@@ -99,19 +177,15 @@ def classify_train():
     #                    rnn_pkl, INP_SIZE, OUT_SIZE)
     # print(results)
 
-
-
     # train vote_net
     # vn = Vote_Net(net_paras=net_paras)
     # vn.train(sequence_dic['samples_seg';p'], sequence_dic['labels_seg'], 'classify/models/vote/',
     #          5000, INP_SIZE, OUT_SIZE)
     # eval vate_net
+    logger.close()
+
 
 if __name__ == "__main__":
-    # test_inps = generate_test('C:/Users/13778/workshop/gitrepos/Air_Apron/data/VOC2007/Annotations/', 100)
-    # sgl = single_process(test_inps)
-    # print(sgl)
-    # mul = mul_process(test_inps)
-    # print(mul)
-    classify_train()
+    # classify('test')
+    classify('train', fresh_dataset=False, exp_id='epoch_2000')
 

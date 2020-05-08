@@ -50,7 +50,10 @@ def generate_dataset(dir, file_name):
     sequence = pd.read_csv(file_path).values
     frame_sequence = set()
     for s in sequence:
-        label = [int(siter) for siter in s[0].split('\t')]
+        if type(s[0]) == type(''):
+            label = [int(siter) for siter in s[0].split('\t')]
+        else:
+            label = s
         # if label[0] not in frame_sequence:
         frame_sequence.add(label[0])
         one_hot = []

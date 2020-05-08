@@ -41,11 +41,11 @@ class RNN_Trainer(object):
         self.rnn = Rnn(inp_size=inp_size, out_size=out_size)
         self.rnn = self.rnn.cuda()
         self.optimizer = torch.optim.Adam(self.rnn.parameters(), lr=0.02)
-        # self.loss_func = nn.MultiLabelSoftMarginLoss() # TODO: New loss function
+        # self.loss_func = nn.MultiLabelSoftMarginLoss()
         self.loss_func = nn.BCELoss()
         self.save_dir = save_dir
 
-    def train(self, dataloader, iter_num):
+    def train(self, dataloader, iter_num, logger, num_epoch):
         losses = []
         for iter, batch in enumerate(dataloader):
             for i in range(len(batch['s'])):
@@ -66,11 +66,11 @@ class RNN_Trainer(object):
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-            print("Epoch {}/Iter {}: Loss={}".format(iter_num, iter, loss))
+            logger.write("Epoch {}/Iter {}: Loss={}\n".format(iter_num, iter, loss))
             # sum_loss += loss
             losses.append(loss)
-            if iter_num + 1 == 500:
-                torch.save(self.rnn, self.save_dir + 'rnn_' + str(iter_num + 1) + '.pkl')
+            if iter_num + 1 == num_epoch:
+                torch.save(self.rnn, os.path.join(self.save_dir , str(num_epoch) + '.pkl'))
 
         return losses
 
@@ -84,20 +84,28 @@ class RNN_Trainer(object):
             for i in range(len(batch['l'])):
                 batch['l'][i] = batch['l'][i].detach().numpy().tolist()
             sample = np.transpose(batch['s'], (2, 0, 1))
-            label = np.transpose(batch['l'], (1, 0)).tolist()
+            label = np.transpose(batch['l'], (1, 0)).tolist()[0]
             x = Variable(torch.tensor(sample, dtype=torch.float32)).cuda()
             h_n = None
             prediction, h_n = rnn(x, h_n)
             prediction = nn.Sigmoid()(prediction)
-            prediction = prediction.detach().cpu().numpy().tolist()
-            for p in prediction:
-                p = 1 if p>=0.5 else 0
-            # TODO: compare prediction with label
+            prediction = prediction.detach().cpu().numpy().tolist()[0]
+            # print(prediction)
+            for i in range(len(prediction)):
+                prediction[i] = 1 if prediction[i]>=0.5 else 0
             ret = []
             for i in range(8):
+                # print("p={} | l={}".format(prediction[2*i : 2*i+2], label[2*i : 2*i+2]))
                 ret.append(1 if prediction[2*i : 2*i+2]==label[2*i : 2*i+2] else 0)
-            rets.append(rets)
-        return rets
+            rets.append(ret)
+
+        # calculate percentage
+        percentages = []
+        r = np.array(rets)
+        for i in range(8):
+            splice = r[:, i]
+            percentages.append(np.mean(splice))
+        return {'rets': rets, 'percentages': percentages}
 
 
 
