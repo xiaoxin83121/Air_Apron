@@ -9,6 +9,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 import os
 from torchsummary import summary
+import classify.config as config
 
 class Rnn(nn.Module):
     def __init__(self, inp_size, out_size):
@@ -17,8 +18,8 @@ class Rnn(nn.Module):
         self.out_size = out_size
         self.rnn = nn.LSTM(
             input_size=inp_size,
-            hidden_size=32,
-            num_layers=2,
+            hidden_size=config.hidden_size,
+            num_layers=config.num_layers,
             batch_first=True
         )
 
@@ -40,7 +41,7 @@ class RNN_Trainer(object):
     def __init__(self, inp_size, out_size, save_dir):
         self.rnn = Rnn(inp_size=inp_size, out_size=out_size)
         self.rnn = self.rnn.cuda()
-        self.optimizer = torch.optim.Adam(self.rnn.parameters(), lr=0.02)
+        self.optimizer = torch.optim.Adam(self.rnn.parameters(), lr=config.learning_rate)
         # self.loss_func = nn.MultiLabelSoftMarginLoss()
         self.loss_func = nn.BCELoss()
         self.save_dir = save_dir
@@ -92,7 +93,7 @@ class RNN_Trainer(object):
             prediction = prediction.detach().cpu().numpy().tolist()[0]
             # print(prediction)
             for i in range(len(prediction)):
-                prediction[i] = 1 if prediction[i]>=0.5 else 0
+                prediction[i] = 1 if prediction[i] >= config.sigmoid_threshold else 0
             ret = []
             for i in range(8):
                 # print("p={} | l={}".format(prediction[2*i : 2*i+2], label[2*i : 2*i+2]))

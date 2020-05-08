@@ -8,14 +8,12 @@ import torch
 import time
 import random
 import json
+import classify.config as config
 from classify.pre_process import single_process, mul_process, safe_area, cal_distance
 from classify.data_augment import generate_dataset, generate_test, merge, data_augument
 from classify.rnn_classify import rnn_train, rnn_eval, rnn_demo, RNN_Trainer
 from classify.vote_classify import Vote_Net
-MAX_SIZE = 10
-WINDOWS = 3
-INP_SIZE = 61
-OUT_SIZE = 16
+
 json_filename = '../../data/sequence.json'
 
 """
@@ -34,15 +32,6 @@ the input vector has a frame id and eight status key
 #     '5': '飞机与生活用车连接'
 # }
 
-EVENT_DICT = {
-    '0': '飞机与空中扶梯连接',
-    '1': '飞机与加油车连接',
-    '2': '飞机与客舱车连接',
-    '3': '飞机与牵引车连接',
-    '4': '客车运送乘客上飞机',
-    '5': '起飞准备',
-    '6': '牵引车牵引进跑道',
-}
 
 class CLogger():
     def __init__(self, exp_id):
@@ -98,7 +87,7 @@ class SequenceDataset(torch.utils.data.Dataset):
             self.labels.append(label_seg)
 
     def split(self):
-        train_percent = 0.7 # 7:3划分数据集
+        train_percent = config.train_percent # 7:3划分数据集
         num = range(self.length)
         data_count = int(self.length * train_percent)
         train_list = random.sample(num, data_count)
@@ -128,13 +117,14 @@ class SonSequenceDataSet(torch.utils.data.Dataset):
 
 def classify(split, fresh_dataset=True, exp_id=''):
     # config
-    net_paras = [[INP_SIZE, OUT_SIZE, 10, 5, 0, 0.5], [INP_SIZE, OUT_SIZE, 10, 4, 1, 0.5]]
+    net_paras = [[config.INP_SIZE, config.OUT_SIZE, 10, 5, 0, 0.5],
+                 [config.INP_SIZE, config.OUT_SIZE, 10, 4, 1, 0.5]]
     # train_data
     if fresh_dataset:
         samples, labels, length = generate_dataset('../../data/VOC2007_1/', 'sequence_1.csv')
         samples2, labels2, length2 = generate_dataset('../../data/VOC2007_2/', 'sequence_2.csv')
         samples3, labels3, length3 = generate_dataset('../../data/VOC2007_3/', 'sequence_3.csv')
-        sequence_size = 10
+        sequence_size = config.sequence_size
         dataset = SequenceDataset(samples, labels, length, sequence_size)
         dataset.add(samples2, labels2, length2, sequence_size)
         dataset.add(samples3, labels3, length3, sequence_size)
@@ -156,10 +146,12 @@ def classify(split, fresh_dataset=True, exp_id=''):
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=True)
 
     save_dir = os.path.join("models/rnn", exp_id)
-    trainer = RNN_Trainer(INP_SIZE, OUT_SIZE, save_dir)
+    trainer = RNN_Trainer(config.INP_SIZE, config.OUT_SIZE, save_dir)
     logger = CLogger(exp_id)
+    logger.write(config.config2dict())
+    logger.write('\n')
     # train rnn_net
-    num_epochs = 2000
+    num_epochs = config.num_epochs
     if split == 'train':
         start_time = time.time()
         for epoch in range(num_epochs):
@@ -187,5 +179,6 @@ def classify(split, fresh_dataset=True, exp_id=''):
 
 if __name__ == "__main__":
     # classify('test')
-    classify('train', fresh_dataset=False, exp_id='epoch_2000')
+    time_str = time.strftime('%Y-%m-%d-%H-%M')
+    classify('train', fresh_dataset=False, exp_id=time_str)
 

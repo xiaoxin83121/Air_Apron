@@ -5,12 +5,9 @@ from __future__ import print_function
 import math
 import numpy as np
 import cv2
+import classify.config as config
 
-input_w, input_h = (1920, 1080)
-Distance = 200
-alpha = 0.5
-person_Distance = 10
-People_Num = 3
+# input_w, input_h = (1920, 1080)
 
 """
 要完成的任务是：飞机的姿态检测，对input进行预处理
@@ -59,7 +56,7 @@ def dfs(id, item_list, uncount_set):
     ids = set()
     iter_set = uncount_set.copy()
     for i in iter_set:
-        if cal_distance(item_list[id], item_list[i]) <= person_Distance and id != i and i in uncount_set:
+        if cal_distance(item_list[id], item_list[i]) <= config.person_Distance and id != i and i in uncount_set:
             uncount_set.remove(i)
             rids, uncount_set = dfs(i, item_list, uncount_set)
             ids = set.union(rids, ids)
@@ -121,8 +118,9 @@ def plane_pose(inputs):
             else:
                 new_width = max(center[0] - left_up[0], right_down[0] - center[0])
                 new_height = max(center[1] - left_up[1], right_down[1] - center[1])
-                plane['center'] = center if cal_distance(head, plane) >= Distance else \
-                    [(1-alpha)*center[0]+alpha*plane['center'][0], (1-alpha)*center[1]+alpha*plane['center'][1]]
+                plane['center'] = center if cal_distance(head, plane) >= config.Distance else \
+                    [(1-config.alpha) * center[0] + config.alpha * plane['center'][0],
+                     (1-config.alpha) * center[1] + config.alpha * plane['center'][1]]
                 plane['size'] = [new_width * 2, new_height * 2]
 
 
@@ -203,7 +201,7 @@ def mul_process(inputs):
         seed = uncount_set.pop()
     while not (not uncount_set):
         ids, uncount_set = dfs(seed, person_list, uncount_set)
-        if len(ids) >= People_Num:
+        if len(ids) >= config.People_Num:
             width, height = [0,0]
             for id in ids:
                 width += person_list[id]['center'][0]

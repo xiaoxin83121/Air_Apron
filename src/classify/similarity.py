@@ -2,11 +2,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import classify.config as config
+
 """
 位置相似度检测算法
 """
 from classify.pre_process import single_process, cal_distance
-move_Distance = 10
+
 
 
 class Frame_Queue(object):
@@ -80,7 +82,7 @@ class Frame_Queue(object):
         # after self.ins
         for i in range(self.wind):
             # 存在q或者是cache该split下center是[0,0]的问题
-            if cal_distance(self.q[len(self.q)-self.wind+i][split], self.cache[i][split]) <= move_Distance:
+            if cal_distance(self.q[len(self.q)-self.wind+i][split], self.cache[i][split]) <= config.move_Distance:
                 return False
         return True
 

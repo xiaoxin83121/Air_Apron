@@ -14,12 +14,10 @@ import cv2
 import math
 import pandas as pd
 from classify.pre_process import single_process, mul_process, cal_distance, safe_area
-
+import classify.config as config
 
 
 def res2vec(res, pos_res, size_res):
-    dis_std = 587
-    center_std = 1024
     sample = list(res.values())
     pos_res = list(pos_res.values())
     size_res = list(size_res.values())
@@ -35,11 +33,11 @@ def res2vec(res, pos_res, size_res):
     split_list = [8, 9, 23, 51, 61]
     sample[split_list[0]] = ( sample[split_list[0]] + math.pi / 2 ) / math.pi
     for i in range(split_list[1], split_list[2]):
-        sample[i] = sample[i] / dis_std
+        sample[i] = sample[i] / config.dis_std
     for i in range(split_list[2], split_list[3]):
-        sample[i] = sample[i] / center_std
+        sample[i] = sample[i] / config.center_std
     for i in range(split_list[3], split_list[4]):
-        sample[i] = sample[i] / dis_std
+        sample[i] = sample[i] / config.dis_std
     return sample
 
 def generate_dataset(dir, file_name):
@@ -248,23 +246,14 @@ def generate_interim_vector(state, sample):
     interim_vec_sample = [{'on_off':1, 'center_bias':[a,b], 'size_bias':[a,b], }...]
     add_vec_sample = [{'class':'stair', }] ## ignore
     """
-    # 不同阶段的噪声控制normal参数 [avg=0, var]
-    state_p_dict = [
-        [4, 36],
-        [1, 4],
-        [9, 64]
-    ]
-    on_off_dict = [
-        0.975, 0.99, 0.985
-    ]
 
     interim_vec_sample = []
     length = len(sample)
-    guassian_center = np.random.normal(0, state_p_dict[state][0], (length, 2))
-    guassian_size = np.random.normal(0, state_p_dict[state][1], (length, 2))
+    guassian_center = np.random.normal(0, config.state_p_dict[state][0], (length, 2))
+    guassian_size = np.random.normal(0, config.state_p_dict[state][1], (length, 2))
     on_off = []
     for r in np.random.random(length):
-        on_off.append(1 if r > on_off_dict[state] else 0)
+        on_off.append(1 if r > config.on_off_dict[state] else 0)
     # print(guassian_center)
     # print(guassian_size)
     # print(on_off)

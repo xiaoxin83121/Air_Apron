@@ -5,7 +5,8 @@ from __future__ import print_function
 import sys
 
 from classify.similarity import Frame_Queue
-from classify.train import MAX_SIZE, WINDOWS, merge
+from classify.config import MAX_SIZE, WINDOWS
+from classify.train import merge
 from classify.rnn_classify import rnn_demo
 from classify.vote_classify import vote
 from tools.logger import Logger
