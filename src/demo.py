@@ -63,10 +63,10 @@ def demo(opt):
             category_id = cls_map_id[cls_ind]
             for bbox in all_bboxes[cls_ind]:
                 score = bbox[4]
-                x1 = bbox[0]
-                y1 = bbox[1]
-                x2 = bbox[2]
-                y2 = bbox[3]
+                x1 = int(bbox[0])
+                y1 = int(bbox[1])
+                x2 = int(bbox[2])
+                y2 = int(bbox[3])
                 bbox_out = [[x1, y1], [x1, y2], [x2, y1], [x2, y2]]
 
                 detection = {
@@ -76,7 +76,8 @@ def demo(opt):
                     "size": [x2-x1, y2-y1],
                     "score": float("{:.2f}".format(score))
                 }
-                detections.append(detection)
+                if score >= 0.02 or x1 > 0 or y2 < 576:
+                    detections.append(detection)
         dets_total.append(detections)
     print(dets_total)
     return dets_total
