@@ -7,6 +7,7 @@ import sys
 import cv2
 from lib.opts import opts
 from lib.Detector import Detector
+from lib.dataset.Pascal import PascalVOC
 
 image_ext = ['jpg', 'jpeg', 'png', 'webp']
 video_ext = ['mp4', 'mov', 'avi', 'mkv']
@@ -19,7 +20,11 @@ sys.path.append("/gs/home/tongchao/zc/Air_Apron/src/")
 def demo(opt):
     cls_map_id = ['__background__', 'plane', 'head', 'wheel', 'wings', 'stair',
                            'oil_car', 'person', 'cone', 'engine', 'traction', 'bus', 'queue', 'cargo']
-    os.environ['CUDA_VISIBLE_DEVICES'] =opt.gpus_str
+    os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpus_str
+
+    Dataset = PascalVOC
+    opt = opts().update_dataset_info_and_set_heads(opt, Dataset)
+
     detector = Detector(opt)
     rets = []
     if opt.demo == 'webcam' or \
