@@ -105,12 +105,13 @@ class Detector(object):
 
             det_new = results[j][:, :4].tolist()
             score_new = results[j][:, 4].tolist()
-            det_new = torch.tensor(det_new, dtype=torch.float)
-            print(det_new)
-            score_new = torch.tensor(score_new, dtype=torch.float)
-            keep = soft_nms_pytorch(det_new, score_new)
-            keep = keep.detach().cpu().numpy().tolist()
-            results[j] = results[j][keep]
+            if len(det_new) != 0:
+                det_new = torch.tensor(det_new, dtype=torch.float)
+                print(det_new)
+                score_new = torch.tensor(score_new, dtype=torch.float)
+                keep = soft_nms_pytorch(det_new, score_new)
+                keep = keep.detach().cpu().numpy().tolist()
+                results[j] = results[j][keep]
 
         scores = np.hstack(
             [results[j][:, 4] for j in range(1, self.num_classes + 1)]
