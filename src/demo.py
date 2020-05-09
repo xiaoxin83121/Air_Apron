@@ -81,7 +81,7 @@ def demo(opt):
                     "size": [x2-x1, y2-y1],
                     "score": float("{:.2f}".format(score))
                 }
-                if score >= 0.02 or x1 > 0 or y2 < 576:
+                if score >= 0.02 and x1 > 0 and y2 < 576:
                     detections.append(detection)
         dets_total.append(detections)
     print(dets_total)
@@ -97,5 +97,5 @@ def detection_demo(detector, img):
 
 
 if __name__ == "__main__":
-    opt = opts().init()
+    opt = opts().parse()
     rets = demo(opt)
