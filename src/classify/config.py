@@ -6,22 +6,22 @@ work for experiment
 ### data_augument.py
 
 # normalization
-dis_std = 587
-center_std = 1024
+dis_std = 587   # 距离与框尺寸最大值定义
+center_std = 1024   # 中心点最大值定义
 
 # 不同阶段的噪声控制normal参数 [avg=0, var]
-state_p_dict = [
+state_p_dict = [   # 不同阶段的数据增广中二维正态分布参数
         [4, 36],
         [1, 4],
         [9, 64]]
-on_off_dict = [
+on_off_dict = [   # 懒惰删除中阈值参数
         0.975, 0.99, 0.985]
 
 ### pre_process.py
-Distance = 200  # head 2 plane
-alpha = 0.5
-person_Distance = 10
-People_Num = 3
+Distance = 200  # 机鼻与飞机中心点距离
+alpha = 0.5   # 飞机位置加权
+person_Distance = 10   # 人判定为人群的距离阈值
+People_Num = 3   # 人判定为人群的人数阈值
 
 ### rnn_classify.py
 hidden_size = 32
@@ -30,13 +30,13 @@ learning_rate = 0.02
 sigmoid_threshold = 0.5
 
 ### similarity.py
-move_Distance = 10
+move_Distance = 10   # 判定移动的阈值
 
 ### train.py
 
 # similarity
-MAX_SIZE = 10
-WINDOWS = 3
+MAX_SIZE = 10   # 与sequence_size相同
+WINDOWS = 3   # 对比窗口
 
 INP_SIZE = 61
 OUT_SIZE = 16

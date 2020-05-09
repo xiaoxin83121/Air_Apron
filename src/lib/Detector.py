@@ -100,6 +100,9 @@ class Detector(object):
                 [detection[j] for detection in detections], axis=0
             ).astype(np.float32)
         # ignore the soft_nms
+
+
+
         scores = np.hstack(
             [results[j][:, 4] for j in range(1, self.num_classes + 1)]
         )
