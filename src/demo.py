@@ -17,6 +17,8 @@ sys.path.append("/gs/home/tongchao/zc/Air_Apron/src/")
 
 
 def demo(opt):
+    cls_map_id = ['__background__', 'plane', 'head', 'wheel', 'wings', 'stair',
+                           'oil_car', 'person', 'cone', 'engine', 'traction', 'bus', 'queue', 'cargo']
     os.environ['CUDA_VISIBLE_DEVICES'] =opt.gpus_str
     detector = Detector(opt)
     rets = []
@@ -53,8 +55,31 @@ def demo(opt):
                 time_str = time_str + '{} {:.3f}s |'.format(stat, ret[stat])
             print(time_str)
             rets.append(ret['results'])
-    print(rets)
-    return rets
+    dets_total = []
+    for i in range(len(rets)):
+        all_bboxes = rets[i]
+        detections = []
+        for cls_ind in all_bboxes:
+            category_id = cls_map_id[cls_ind]
+            for bbox in all_bboxes[cls_ind]:
+                score = bbox[4]
+                x1 = bbox[0]
+                y1 = bbox[1]
+                x2 = bbox[2]
+                y2 = bbox[3]
+                bbox_out = [[x1, y1], [x1, y2], [x2, y1], [x2, y2]]
+
+                detection = {
+                    "class": category_id,
+                    "bbox": bbox_out,
+                    "center": [(x2+x1)/2, (y1+y2)/2],
+                    "size": [x2-x1, y2-y1],
+                    "score": float("{:.2f}".format(score))
+                }
+                detections.append(detection)
+        dets_total.append(detections)
+    print(dets_total)
+    return dets_total
 
 
 def detection_demo(detector, img):
