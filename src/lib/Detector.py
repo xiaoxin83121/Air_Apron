@@ -17,6 +17,7 @@ opt.flip_test
 from lib.models import load_model, save_model, create_model
 from utils import image_process as ip
 from utils import decode
+from external.nms import soft_nms
 
 class Detector(object):
     def __init__(self, opt):
@@ -99,9 +100,8 @@ class Detector(object):
             results[j] = np.concatenate(
                 [detection[j] for detection in detections], axis=0
             ).astype(np.float32)
-        # ignore the soft_nms
 
-
+            soft_nms(results[j], Nt=0.5, method=2)
 
         scores = np.hstack(
             [results[j][:, 4] for j in range(1, self.num_classes + 1)]
