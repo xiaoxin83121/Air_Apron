@@ -179,8 +179,20 @@ def rnn_eval(sample_batch, label_batch, save_dir, inp_size=47, out_size=4):
 
 def rnn_demo(sample, save_dir, latest_iter):
     # input should be sequence
-    model = torch.load(save_dir, 'rnn_'+str(latest_iter)+'.pkl')
+    model = torch.load(save_dir, str(latest_iter)+'.pkl')
     sample = np.array(sample, dtype=np.float32)
     x = Variable(torch.tensor(sample, dtype=torch.float32))
-    preds, _ = model(x)
-    return preds.detach().numpy()
+    prediction, _ = model(x)
+    prediction = nn.Sigmoid()(prediction)
+    prediction = prediction.detach().cpu().numpy().tolist()[0]
+    # print(prediction)
+    for i in range(len(prediction)):
+        prediction[i] = 1 if prediction[i] >= config.sigmoid_threshold else 0
+
+    # 转为正常值
+    rets = []
+    for i in range(8):
+        rets.append(prediction[i*2]*2 + prediction[i*2+1])
+    rets[7] = 2 if rets[7] == 3 else rets[7]
+    return rets
+

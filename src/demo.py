@@ -53,6 +53,7 @@ def demo(opt):
                 time_str = time_str + '{} {:.3f}s |'.format(stat, ret[stat])
             print(time_str)
             rets.append(ret['results'])
+    print(rets)
     return rets
 
 
@@ -65,5 +66,5 @@ def detection_demo(detector, img):
 
 
 if __name__ == "__main__":
-    opt = opts.init()
+    opt = opts().init()
     rets = demo(opt)

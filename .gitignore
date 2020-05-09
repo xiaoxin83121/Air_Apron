@@ -3,3 +3,4 @@ data/
 exp/
 *.pkl
 src/classify/models/
+src/external
