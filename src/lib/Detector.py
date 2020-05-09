@@ -106,6 +106,7 @@ class Detector(object):
             det_new = results[j][:, :4].tolist()
             score_new = results[j][:, 4].tolist()
             det_new = torch.tensor(det_new, dtype=torch.float)
+            print(det_new)
             score_new = torch.tensor(score_new, dtype=torch.float)
             keep = soft_nms_pytorch(det_new, score_new)
             keep = keep.detach().cpu().numpy().tolist()
@@ -179,7 +180,7 @@ def soft_nms_pytorch(dets, box_scores, sigma=0.1, thresh=0.001, cuda=0):
     """
     Build a pytorch implement of Soft NMS algorithm.
     # Augments
-        dets:        boxes coordinate tensor (format:[y1, x1, y2, x2])
+        dets:        boxes coordinate tensor (format:[x1, y1, x2, y2])
         box_scores:  box score tensors
         sigma:       variance of Gaussian function
         thresh:      score thresh
@@ -196,11 +197,11 @@ def soft_nms_pytorch(dets, box_scores, sigma=0.1, thresh=0.001, cuda=0):
         indexes = torch.arange(0, N, dtype=torch.float).view(N, 1)
     dets = torch.cat((dets, indexes), dim=1)
 
-    # The order of boxes coordinate is [y1,x1,y2,x2]
-    y1 = dets[:, 0]
-    x1 = dets[:, 1]
-    y2 = dets[:, 2]
-    x2 = dets[:, 3]
+    # The order of boxes coordinate is [x1,y1,x2,y2]
+    y1 = dets[:, 1]
+    x1 = dets[:, 0]
+    y2 = dets[:, 3]
+    x2 = dets[:, 2]
     scores = box_scores
     areas = (x2 - x1 + 1) * (y2 - y1 + 1)
 
