@@ -80,6 +80,8 @@ class Frame_Queue(object):
     def is_move(self, split):
         # 判断当前有没有动
         # after self.ins
+        if len(self.q) < self.wind:
+            return False
         for i in range(self.wind):
             # 存在q或者是cache该split下center是[0,0]的问题
             if cal_distance(self.q[len(self.q)-self.wind+i][split], self.cache[i][split]) <= config.move_Distance:
