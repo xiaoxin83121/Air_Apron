@@ -38,12 +38,13 @@ class Frame_Queue(object):
         if not self.windows_empty(split):  # 如果该split临近窗口内不全为空
             width, height, count = self.cal_means(split)
             if self.q[-1][is_str]:  # 如果当前帧存在split
-                self.q[-1][split]['center'][0] = int(width * (count / count+1) + \
+                # print(count)
+                self.q[-1][split]['center'][0] = int(width * (count / (count+1)) + \
                                                                 self.q[-1][split]['center'][0] * \
-                                                                (1 / count+1))
-                self.q[-1][split]['center'][1] = int(height * (count / count+1) + \
+                                                                (1 / (count+1) ))
+                self.q[-1][split]['center'][1] = int(height * (count / (count+1)) + \
                                                                   self.q[-1][split]['center'][1] *
-                                                                (1 / count+1))
+                                                                (1 / (count+1)))
             else:  # 当前帧不存在split
                 self.q[-1][split]['center'] = [width, height]
                 self.q[-1][is_str] = True

@@ -9,7 +9,7 @@ from lib.resnet import get_pose_net
 
 def create_model(arch, heads, head_conv):
     # model = get_large_hourglass_net(num_layers=0, heads=heads, head_conv=head_conv)
-    model = get_pose_net(18, heads=heads, head_conv=head_conv)
+    model = get_pose_net(50, heads=heads, head_conv=head_conv)
     return model
 
 def load_model(model, model_path, optimizer=None, resume=False,

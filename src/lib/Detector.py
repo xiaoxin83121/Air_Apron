@@ -17,7 +17,7 @@ opt.flip_test
 from lib.models import load_model, save_model, create_model
 from utils import image_process as ip
 from utils import decode
-from external.nms import soft_nms
+# from external.nms import soft_nms
 
 class Detector(object):
     def __init__(self, opt):
@@ -101,13 +101,13 @@ class Detector(object):
                 [detection[j] for detection in detections], axis=0
             ).astype(np.float32)
 
-            soft_nms(results[j], Nt=0.5, method=2)
+            # soft_nms(results[j], Nt=0.5, method=2)
 
             det_new = results[j][:, :4].tolist()
             score_new = results[j][:, 4].tolist()
             if len(det_new) != 0:
                 det_new = torch.tensor(det_new, dtype=torch.float)
-                print(det_new)
+                # print(det_new)
                 score_new = torch.tensor(score_new, dtype=torch.float)
                 keep = soft_nms_pytorch(det_new, score_new)
                 keep = keep.detach().cpu().numpy().tolist()

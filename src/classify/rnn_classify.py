@@ -156,33 +156,17 @@ def rnn_train(inps, labels, save_dir, iter_num=1000, inp_size=10, out_size=2):
             return save_dir+'rnn_'+str(iter_num)+'.pkl'
 
 
-def rnn_eval(sample_batch, label_batch, save_dir, inp_size=47, out_size=4):
-    model = torch.load(save_dir)
-    samples = np.array(sample_batch, dtype=np.float32)
-    labels = np.array(label_batch, dtype=np.int8).transpose()
-    # labels = labels.transpose()
-    x = Variable(torch.tensor(samples, dtype=torch.float32))
-    # y = Variable(torch.Tensor(labels).type(torch.IntTensor))
-
-    preds, _ = model(x) # preds = batch_size* out_size
-    preds = preds.detach().numpy().transpose()
-    results = []
-    for i in range(out_size):
-        pred = preds[i]
-        label = labels[i]
-        res = []
-        for j in range(len(pred)):
-            res.append(1 if pred[i]==label[i] else 0)
-        results.append(np.mean(res))
-    return results
+def rnn_eval(path, res):
+    pass
 
 
 def rnn_demo(sample, save_dir, latest_iter):
     # input should be sequence
-    model = torch.load(save_dir, str(latest_iter)+'.pkl')
+    model = torch.load(os.path.join(save_dir, str(latest_iter)+'.pkl'))
     sample = np.array(sample, dtype=np.float32)
-    x = Variable(torch.tensor(sample, dtype=torch.float32))
-    prediction, _ = model(x)
+    x = Variable(torch.tensor(sample, dtype=torch.float32)).cuda()
+    h_n = None
+    prediction, _ = model(x, h_n)
     prediction = nn.Sigmoid()(prediction)
     prediction = prediction.detach().cpu().numpy().tolist()[0]
     # print(prediction)

@@ -150,7 +150,7 @@ def plane_pose(inputs):
         'ground': ground
     } if plane_exist==True else\
     {
-        'class':'', 'center': [], 'size': [], 'horizon': -1, 'ground': ground
+        'class':'', 'center': [0, 0], 'size': [0, 0], 'horizon': -1, 'ground': ground
         }
 
     return res, plane_exist
