@@ -4,6 +4,9 @@ work for experiment
 """
 
 ### data_augument.py
+input_w = 1024
+input_h = 576
+
 
 # normalization
 dis_std = 587   # 距离与框尺寸最大值定义
@@ -22,12 +25,13 @@ Distance = 200  # 机鼻与飞机中心点距离
 alpha = 0.5   # 飞机位置加权
 person_Distance = 10   # 人判定为人群的距离阈值
 People_Num = 3   # 人判定为人群的人数阈值
+beta = 0.6
 
 ### rnn_classify.py
 hidden_size = 32
 num_layers = 2
 learning_rate = 0.02
-sigmoid_threshold = 0.5
+sigmoid_threshold = 0.6
 
 ### similarity.py
 move_Distance = 10   # 判定移动的阈值

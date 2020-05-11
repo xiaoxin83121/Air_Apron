@@ -22,24 +22,26 @@ def main(opt):
     fq = Frame_Queue(max_size=MAX_SIZE, wind=WINDOWS)
     # get image from live or video
 
-    # while循环
     # img in opt.demo
     rets = demo(opt)
-    # count = 0
-    # sequence = []
-    # for ret in rets:
-    #     fq.ins(ret)
-    #     result = fq.get_result()
-    #     res, pos_res, size_res = merge(ret, result)
-    #     sample = res2vec(res, pos_res, size_res)
-    #     if count == 0:
-    #         for i in range(MAX_SIZE):
-    #             sequence.append(sample)
-    #     else:
-    #         sequence.pop()
-    #         sequence.append(sample)
-    #     # 加入到分类网络中
-    #     classification = rnn_demo(sample=sequence, save_dir='classify/models/rnn/epoch_2000', latest_iter=2000)
+    path = opt.demo
+    count = 0
+    sequence = []
+    for ret in rets:
+        fq.ins(ret)
+        result = fq.get_result()
+        res, pos_res, size_res = merge(ret, result)
+        sample = res2vec(res, pos_res, size_res)
+        if count == 0:
+            for i in range(MAX_SIZE):
+                sequence.append(sample)
+        else:
+            sequence.pop()
+            sequence.append(sample)
+        # 加入到分类网络中
+        classification = rnn_demo(sample=sequence, save_dir='classify/models/rnn/epoch_2000', latest_iter=2000)
+        count += 1
+        print(classification)
 
     # eval
 

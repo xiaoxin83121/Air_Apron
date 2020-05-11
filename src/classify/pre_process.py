@@ -16,13 +16,18 @@ inputs should be below per frame: [{
     'class': 'person',
     'bbox': [[x1, y1], [x1, y2], [x2, y1], [x2, y2]],
     'center': [a, b], 
-    'size': [w, h]
+    'size': [w, h],
+    'score': s
 }]
 """
 
 
-def cal_size(elem):
-    return elem['size'][0] * elem['size'][1]
+def cal_prior(elem):
+    width = elem['size'][0] / (config.input_w / 2)
+    height = elem['size'][1] / (config.input_h / 2)
+    area = width * height
+    score = elem['score'] if 'score' in elem else 1
+    return area * (1 - config.beta) + config.beta * score
 
 
 def cal_distance(elem1, elem2):
@@ -40,7 +45,7 @@ def find_max(inputs, split):
     for inp in inputs:
         if inp['class']==split:
             _lists.append(inp)
-    sorted_list = sorted(_lists, key=cal_size, reverse=True)
+    sorted_list = sorted(_lists, key=cal_prior, reverse=True)
     return sorted_list[0]
 
 
@@ -95,7 +100,7 @@ def plane_pose(inputs):
         plane_exist = False
     else:
         # 找到size最大的检测框
-        plane_sorted = sorted(plane_dict['plane'], key=cal_size, reverse=True)
+        plane_sorted = sorted(plane_dict['plane'], key=cal_prior, reverse=True)
         plane = plane_sorted[0]
         plane_exist = True
 
@@ -107,7 +112,7 @@ def plane_pose(inputs):
             center = [-1, -1]
         # 否则按照原先的plane位置
     else:
-        head_sorted = sorted(plane_dict['head'], key=cal_size, reverse=True)
+        head_sorted = sorted(plane_dict['head'], key=cal_prior, reverse=True)
         head = head_sorted[0]
         if plane_exist:
             center = head['center']

@@ -84,7 +84,6 @@ def demo(opt):
                 if score >= 0.02 and x1 > 0 and y2 < 576:
                     detections.append(detection)
         dets_total.append(detections)
-    print(dets_total)
     return dets_total
 
 
