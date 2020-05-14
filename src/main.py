@@ -14,7 +14,7 @@ from classify.data_augment import res2vec, generate_dataset
 from classify.rnn_classify import rnn_demo
 from demo import detection_demo, demo
 from lib.opts import opts
-from lib.dataset.Pascal import PascalVOC
+from classify.pre_process import single_process
 
 # sys.path.append("C:/User/13778/workshop/gitrepos/Air_Apron/src/")
 sys.path.append("/gs/home/tongchao/zc/Air_Apron/src/")
@@ -38,6 +38,10 @@ def main(opt):
     for ret in rets:
         fq.ins(ret)
         result = fq.get_result()
+        # print("out_side={}".format(single_process(ret)['oil_car']))
+        # print("frame {} : res= {} ret={} is_res={} is_ret={}".format(count,
+        #             result['oil_car'], single_process(ret)['oil_car'], result['is_oil_car'],
+        #                                                              single_process(ret)['is_oil_car']))
         res, pos_res, size_res = merge(ret, result)
         # print(result)
         sample = res2vec(res, pos_res, size_res)

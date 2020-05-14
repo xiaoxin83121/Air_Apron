@@ -147,10 +147,11 @@ def plane_pose(inputs):
         'center': plane['center'],
         'size': plane['size'],
         'horizon': horizon,
-        'ground': ground
+        'ground': ground,
+        'score': 0.5
     } if plane_exist==True else\
     {
-        'class':'', 'center': [0, 0], 'size': [0, 0], 'horizon': -1, 'ground': ground
+        'class':'', 'center': [0, 0], 'size': [0, 0], 'horizon': 0, 'ground': ground, 'score':0
         }
 
     return res, plane_exist
@@ -161,7 +162,7 @@ def single_process(inputs):
     for inp in inputs:
         cls.add(inp['class'])
     # print(cls)
-    empty_dict = {'class':'', 'bbox':[], 'center':[0, 0], 'size': [0, 0]}
+    empty_dict = {'class':'', 'bbox':[], 'center':[0, 0], 'size': [0, 0], 'score': 0}
     is_oilcar = True if 'oil_car' in cls else False
     is_stair = True if 'stair' in cls else False
     is_traction = True if 'traction' in cls else False

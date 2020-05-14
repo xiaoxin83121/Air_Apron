@@ -170,6 +170,7 @@ def rnn_demo(sample, save_dir, latest_iter):
     prediction = nn.Sigmoid()(prediction)
     prediction = prediction.detach().cpu().numpy().tolist()[0]
     # print(prediction)
+    print(prediction)
     for i in range(len(prediction)):
         prediction[i] = 1 if prediction[i] >= config.sigmoid_threshold else 0
 

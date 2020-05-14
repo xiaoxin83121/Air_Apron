@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import classify.config as config
+import copy
 
 """
 位置相似度检测算法
@@ -23,22 +24,26 @@ class Frame_Queue(object):
 
     def ins(self, inputs):
         res = single_process(inputs)
+        # print("1={}".format(res['oil_car']))
+        res1 = copy.deepcopy(res)
         if len(self.q) >= self.max_size:
             self.q.pop(0)
-        self.q.append(res)
+        self.q.append(res1)
         if len(self.cache) >= self.wind:
             self.cache.pop(0)
         self.cache.append(res)
         if len(self.q) > self.wind:
             for obj in self.objs:
                 self.split_deal(obj)
+        # print("2={}".format(res['oil_car']))
+        # print(self.q[-1]['oil_car'])
+        # print("2={}".format(self.cache[-1]['oil_car']))
 
     def split_deal(self, split):
         is_str = 'is_' + split
         if not self.windows_empty(split):  # 如果该split临近窗口内不全为空
             width, height, count = self.cal_means(split)
             if self.q[-1][is_str]:  # 如果当前帧存在split
-                # print(count)
                 self.q[-1][split]['center'][0] = int(width * (count / (count+1)) + \
                                                                 self.q[-1][split]['center'][0] * \
                                                                 (1 / (count+1) ))
@@ -46,8 +51,16 @@ class Frame_Queue(object):
                                                                   self.q[-1][split]['center'][1] *
                                                                 (1 / (count+1)))
             else:  # 当前帧不存在split
-                self.q[-1][split]['center'] = [width, height]
+                self.q[-1][split]['center'][0] = width
+                self.q[-1][split]['center'][1] = height
+                # TODO: 补充size
                 self.q[-1][is_str] = True
+            # if split == 'oil_car':
+            #     print("w={} h={} c={} ct={}".format(width, height, count, self.q[-1][split]))
+        else:
+            # self.q[-1][split]['center'] = [0, 0]
+            # self.q[-1][split]['size'] = [0, 0]
+            self.q[-1][is_str] = False
 
     def windows_empty(self, split):
         # return False means not all items in windows are empty
@@ -57,7 +70,7 @@ class Frame_Queue(object):
         #         return False
         # return True
         for i in range(0, len(self.cache)):
-            if self.cache[i][is_str]:
+            if self.cache[i][is_str] and self.cache[i][split]['score'] > 0.1:
                 return False
         return True
 
@@ -84,7 +97,7 @@ class Frame_Queue(object):
         if len(self.q) < self.wind:
             return False
         for i in range(self.wind):
-            # 存在q或者是cache该split下center是[0,0]的问题
+            # TODO: 存在q或者是cache该split下center是[0,0]的问题
             if cal_distance(self.q[len(self.q)-self.wind+i][split], self.cache[i][split]) <= config.move_Distance:
                 return False
         return True
@@ -96,8 +109,8 @@ class Frame_Queue(object):
     def get_result(self):
         # get the final result
         # 存在一种is_move=True 但empty_wind=False, q[-1]为修正值；cache[-1]为空。此时不能fresh
-        for obj in self.objs:
-            if self.is_move(split=obj) and self.cache[-1]['is_'+obj]:
-                self.fresh(split=obj)
+        # for obj in self.objs:
+        #     if self.is_move(split=obj) and self.cache[-1]['is_'+obj]:
+        #         self.fresh(split=obj)
         return self.q[-1]
 
