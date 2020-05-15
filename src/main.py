@@ -52,7 +52,7 @@ def main(opt):
             sequence.pop()
             sequence.append(sample)
         # 加入到分类网络中
-        classification = rnn_demo(sample=[sequence], save_dir='classify/models/rnn/epoch_2000', latest_iter=2000)
+        classification = rnn_demo(sample=[sequence], save_dir='classify/models/rnn/epoch_1000_modify_0', latest_iter=2000)
         count += 1
         classes.append(classification)
 

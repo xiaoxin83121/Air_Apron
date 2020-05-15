@@ -35,7 +35,7 @@ def event_loss(exp_id):
     log_path = os.path.join(base_path, exp_id, 'log.txt')
     with open(log_path, 'r') as log_f:
         lines = log_f.readlines()
-        lines = lines[0: -2]
+        lines = lines[1: -2]
         epoch_loss = []
         epoch_content = []
         for line in lines:
@@ -67,5 +67,5 @@ def single_bbox_joggle():
 
 
 
-# event_loss('epoch_2000')
-object_loss('../../data/log.txt')
+event_loss('epoch_1000_modify_0')
+# object_loss('../../data/log.txt')

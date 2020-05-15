@@ -115,7 +115,7 @@ class SonSequenceDataSet(torch.utils.data.Dataset):
         return self.dataset[item]
 
 
-def classify(split, fresh_dataset=True, exp_id=''):
+def classify(split, fresh_dataset=False, exp_id=''):
     # config
     net_paras = [[config.INP_SIZE, config.OUT_SIZE, 10, 5, 0, 0.5],
                  [config.INP_SIZE, config.OUT_SIZE, 10, 4, 1, 0.5]]
@@ -124,10 +124,17 @@ def classify(split, fresh_dataset=True, exp_id=''):
         samples, labels, length = generate_dataset('../../data/VOC2007_1/', 'sequence_1.csv')
         samples2, labels2, length2 = generate_dataset('../../data/VOC2007_2/', 'sequence_2.csv')
         samples3, labels3, length3 = generate_dataset('../../data/VOC2007_3/', 'sequence_3.csv')
+        res_1 = data_augument(seq_dir='../../data/VOC2007_1', anno_dir='../../data/VOC2007_1/Annotations',
+                     csv_name='sequence_1.csv')
+        res_2 = data_augument(seq_dir='../../data/VOC2007_2', anno_dir='../../data/VOC2007_2/Annotations',
+                     csv_name='sequence_2.csv')
+
         sequence_size = config.sequence_size
         dataset = SequenceDataset(samples, labels, length, sequence_size)
         dataset.add(samples2, labels2, length2, sequence_size)
         dataset.add(samples3, labels3, length3, sequence_size)
+        dataset.add(res_1['samples'], res_1['labels'], res_1['length'], sequence_size)
+        dataset.add(res_2['samples'], res_2['labels'], res_2['length'], sequence_size)
         dataset.split()
     try:
         load_f = open(json_filename)
@@ -136,7 +143,7 @@ def classify(split, fresh_dataset=True, exp_id=''):
         print('fresh_datast should be True if json_file does not exist' )
 
     train_dataset = SonSequenceDataSet(res_dict['train_len'], res_dict['train'])
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=5, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
 
     # test_data
     # res = data_augument(seq_dir='../../data/VOC2007_1', anno_dir='../../data/VOC2007_1/Annotations',
@@ -178,7 +185,8 @@ def classify(split, fresh_dataset=True, exp_id=''):
 
 
 if __name__ == "__main__":
-    # classify('test')
+    # classify('test', fresh_dataset=False ,exp_id='epoch_2000')
     time_str = time.strftime('%Y-%m-%d-%H-%M')
-    classify('train', fresh_dataset=False, exp_id=time_str)
+    classify('train', fresh_dataset=True, exp_id='epoch_1000_modify_1')
+
 

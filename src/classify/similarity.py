@@ -42,7 +42,7 @@ class Frame_Queue(object):
     def split_deal(self, split):
         is_str = 'is_' + split
         if not self.windows_empty(split):  # 如果该split临近窗口内不全为空
-            width, height, count = self.cal_means(split)
+            width, height, size_0, size_1, count = self.cal_means(split)
             if self.q[-1][is_str]:  # 如果当前帧存在split
                 self.q[-1][split]['center'][0] = int(width * (count / (count+1)) + \
                                                                 self.q[-1][split]['center'][0] * \
@@ -50,10 +50,17 @@ class Frame_Queue(object):
                 self.q[-1][split]['center'][1] = int(height * (count / (count+1)) + \
                                                                   self.q[-1][split]['center'][1] *
                                                                 (1 / (count+1)))
+                self.q[-1][split]['size'][0] = int(size_0 * (count / (count + 1)) + \
+                                                     self.q[-1][split]['size'][0] * \
+                                                     (1 / (count + 1)))
+                self.q[-1][split]['size'][1] = int(size_1 * (count / (count + 1)) + \
+                                                     self.q[-1][split]['size'][1] *
+                                                     (1 / (count + 1)))
             else:  # 当前帧不存在split
                 self.q[-1][split]['center'][0] = width
                 self.q[-1][split]['center'][1] = height
-                # TODO: 补充size
+                self.q[-1][split]['size'][0] = size_0
+                self.q[-1][split]['size'][1] = size_1
                 self.q[-1][is_str] = True
             # if split == 'oil_car':
             #     print("w={} h={} c={} ct={}".format(width, height, count, self.q[-1][split]))
@@ -79,16 +86,21 @@ class Frame_Queue(object):
         # only work when windows_empty==False
         count = 0  # 多少帧有这个目标
         sum_width, sum_height = [0, 0]
+        size_0, size_1 = [0, 0]
         for i in range(len(self.q) - 1):
             is_str = 'is_' + split
             if self.q[i][is_str]:  # False帧不计算
                 count += 1
                 sum_width += self.q[i][split]['center'][0]
                 sum_height += self.q[i][split]['center'][1]
+                size_0 += self.q[i][split]['size'][0]
+                size_1 += self.q[i][split]['size'][1]
         if count != 0:
             sum_width = sum_width // count
             sum_height = sum_height // count
-        return sum_width, sum_height, count
+            size_0 = size_0 // count
+            size_1 = size_1 // count
+        return sum_width, sum_height, size_0, size_1, count
         # return center
 
     def is_move(self, split):

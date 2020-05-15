@@ -150,8 +150,8 @@ def merge(inputs, sgl):
     pb =[[0, 0], [0, 0]]
     pq = [[0, 0], [0, 0]]
     pp = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-    dps_min = [0, 0, 0, 0, 0]
-    dps_max = [0, 0, 0, 0, 0]
+    dps_min = [config.dis_std, config.dis_std, config.dis_std, config.dis_std, config.dis_std]
+    dps_max = [config.dis_std, config.dis_std, config.dis_std, config.dis_std, config.dis_std]
     for i in range(min(2, len(bus_list))):
         pb[i] = bus_list[i]['center']
     for i in range(min(2, len(queue_list))):
@@ -168,10 +168,10 @@ def merge(inputs, sgl):
         'is_person': 1 if mul['is_person'] else 0, 'is_queue': 1 if mul['is_queue'] else 0,
         'is_bus': 1 if mul['is_bus'] else 0,
         'horizon': sgl['plane']['horizon'], # [arctan -pi/2~pi/2]
-        'plane2oil': cal_distance(sgl['plane'], sgl['oil_car']) if sgl['is_plane'] and sgl['is_oil_car'] else 0,
-        'plane2stair': cal_distance(sgl['plane'], sgl['stair']) if sgl['is_plane'] and sgl['is_stair'] else 0,
-        'plane2traction': cal_distance(sgl['plane'], sgl['traction']) if sgl['is_plane'] and sgl['is_traction'] else 0,
-        'plane2cargo': cal_distance(sgl['plane'], sgl['cargo']) if sgl['is_plane'] and sgl['is_cargo'] else 0,
+        'plane2oil': cal_distance(sgl['plane'], sgl['oil_car']) if sgl['is_plane'] and sgl['is_oil_car'] else config.dis_std,
+        'plane2stair': cal_distance(sgl['plane'], sgl['stair']) if sgl['is_plane'] and sgl['is_stair'] else config.dis_std,
+        'plane2traction': cal_distance(sgl['plane'], sgl['traction']) if sgl['is_plane'] and sgl['is_traction'] else config.dis_std,
+        'plane2cargo': cal_distance(sgl['plane'], sgl['cargo']) if sgl['is_plane'] and sgl['is_cargo'] else config.dis_std,
         # person to safe_area distance
         'dps_min1': dps_min[0], 'dps_min2': dps_min[1], 'dps_min3': dps_min[2],
         'dps_min4': dps_min[3], 'dps_min5': dps_min[4],
@@ -206,7 +206,10 @@ def data_augument(seq_dir, anno_dir, csv_name):
     labels = []
     samples = []
     for s in sequence:
-        label = [int(siter) for siter in s[0].split('\t')]
+        if type(s[0]) == type(''):
+            label = [int(siter) for siter in s[0].split('\t')]
+        else:
+            label = s
         frame_sequence.add(label[0])
         one_hot = []
         for l in label[1:9]:
