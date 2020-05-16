@@ -7,6 +7,7 @@ import os
 from pycocotools import coco
 from pycocotools.cocoeval import COCOeval
 import numpy as np
+import matplotlib.pyplot as plt
 import cv2
 import math
 import json
@@ -232,3 +233,21 @@ class PascalVOC(data.Dataset):
         coco_eval.evaluate()
         coco_eval.accumulate()
         coco_eval.summarize()
+
+        pr_arr1 = coco_eval.eval['precision'][0, :, 0, 0, 2]
+        pr_arr2 = coco_eval.eval['precision'][2, :, 0, 0, 2]
+        pr_arr3 = coco_eval.eval['precision'][4, :, 0, 0, 2]
+        x = np.arange(0.0, 1.01, 0.01)
+        plt.xlabel('recall')
+        plt.ylabel('precision')
+        plt.xlim(0, 1.0)
+        plt.ylim(0, 1.01)
+        plt.grid(True)
+
+        plt.plot(x, pr_arr1, 'b-', label='IoU=0.5')
+        plt.plot(x, pr_arr2, 'c-', label='IoU=0.6')
+        plt.plot(x, pr_arr3, 'y-', label='IoU=0.7')
+
+        plt.legend(loc="lower left")
+        plt.savefig(os.path.join(save_dir, 'p_r_curve.jpg'))
+        plt.show()
