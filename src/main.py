@@ -35,6 +35,7 @@ def main(opt):
     count = 0
     sequence = []
     classes = []
+    predictions = []
     for ret in rets:
         fq.ins(ret)
         result = fq.get_result()
@@ -52,9 +53,11 @@ def main(opt):
             sequence.pop()
             sequence.append(sample)
         # 加入到分类网络中
-        classification = rnn_demo(sample=[sequence], save_dir='classify/models/rnn/epoch_1000_modify_0', latest_iter=2000)
+        classification, prediction = rnn_demo(sample=[sequence], save_dir='classify/models/rnn/epoch_1000_modify_0',
+                                              latest_iter=2000)
         count += 1
         classes.append(classification)
+        predictions.append(prediction)
 
     # print(classes)
     # eval
@@ -74,8 +77,31 @@ def main(opt):
     for i in range(8):
         splice = r[:, i]
         percentages.append(np.mean(splice))
-    print(percentages)
+    print("acu={}".format(percentages))
 
+    precisions = []
+    recalls = []
+    p = np.array(predictions)
+    l = np.array(labels)
+    for i in range(16):
+        p_splice = p[:, i]
+        l_splice = l[:, i]
+        length = len(p_splice)
+        tp, fp, fn, tn = (0, 0, 0, 0)
+        for j in range(length):
+            if p_splice[j] == 1 and l_splice[j] == 1:
+                tp += 1
+            elif p_splice[j] == 1 and l_splice[j] == 0:
+                fp += 1
+            elif p_splice[j] == 0 and l_splice[j] == 1:
+                tn += 1
+            else:
+                fn += 1
+        # print("tp={}, fp={}, fn={}, tn={}".format(tp, fp, fn, tn))
+        precisions.append(tp / (tp + fp) if tp+fp != 0 else 0)
+        recalls.append(tp / (tp + fn) if tp+fn != 0 else 0)
+    print("prec={}".format(precisions))
+    print('rec={}'.format(recalls))
 
 
 if __name__ == "__main__":

@@ -138,7 +138,7 @@ def ver_dis(point, line_set):
             dis = abs(A * point[0] + point[1] + C) / \
                 math.sqrt(A**2 + 1)
         diss.append(dis)
-    return min(diss) if not (not diss) else -1, max(diss) if not (not diss) else -1
+    return min(diss) if not (not diss) else config.dis_std, max(diss) if not (not diss) else config.dis_std
 
 def merge(inputs, sgl):
     # para:inputs is the result of object detection per frame

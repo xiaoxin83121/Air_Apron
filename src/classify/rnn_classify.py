@@ -23,7 +23,7 @@ class Rnn(nn.Module):
             batch_first=True
         )
 
-        self.linear = nn.Linear(32, out_size)
+        self.linear = nn.Linear(config.hidden_size, out_size)
 
     def forward(self, x, h_n):
         r_out, h_n = self.rnn(x, h_n)
@@ -78,6 +78,8 @@ class RNN_Trainer(object):
     def eval(self, dataloader, path=""):
         rnn = self.rnn if path=="" else torch.load(path)
         rets = []
+        predictions = []
+        labels = []
         for iter, batch in enumerate(dataloader):
             for i in range(len(batch['s'])):
                 for j in range(len(batch['s'][i])):
@@ -86,6 +88,7 @@ class RNN_Trainer(object):
                 batch['l'][i] = batch['l'][i].detach().numpy().tolist()
             sample = np.transpose(batch['s'], (2, 0, 1))
             label = np.transpose(batch['l'], (1, 0)).tolist()[0]
+            labels.append(label)
             x = Variable(torch.tensor(sample, dtype=torch.float32)).cuda()
             h_n = None
             prediction, h_n = rnn(x, h_n)
@@ -94,19 +97,43 @@ class RNN_Trainer(object):
             # print(prediction)
             for i in range(len(prediction)):
                 prediction[i] = 1 if prediction[i] >= config.sigmoid_threshold else 0
+            predictions.append(prediction)
             ret = []
             for i in range(8):
                 # print("p={} | l={}".format(prediction[2*i : 2*i+2], label[2*i : 2*i+2]))
                 ret.append(1 if prediction[2*i : 2*i+2]==label[2*i : 2*i+2] else 0)
             rets.append(ret)
 
-        # calculate percentage
+        # calculate precision of every class
         percentages = []
         r = np.array(rets)
         for i in range(8):
             splice = r[:, i]
             percentages.append(np.mean(splice))
-        return {'rets': rets, 'percentages': percentages}
+
+        # calculate precision and recall of one-hot code
+        precisions = []
+        recalls = []
+        p = np.array(predictions)
+        l = np.array(labels)
+        for i in range(16):
+            p_splice = p[:, i]
+            l_splice = l[:, i]
+            length = len(p_splice)
+            tp, fp, fn, tn = (0, 0, 0, 0)
+            for j in range(length):
+                if p_splice[j] == 1 and l_splice[j] == 1:
+                    tp += 1
+                elif p_splice[j] == 1 and l_splice[j] == 0:
+                    fp += 1
+                elif p_splice[j] == 0 and l_splice[j] == 1:
+                    tn += 1
+                else:
+                    fn += 1
+            precisions.append(tp / (tp+fp))
+            recalls.append(tp / (tp+fn))
+
+        return {'rets': rets, 'percentages': percentages, 'precisions':precisions, 'recalls':recalls}
 
 
 
@@ -179,5 +206,5 @@ def rnn_demo(sample, save_dir, latest_iter):
     for i in range(8):
         rets.append(prediction[i*2]*2 + prediction[i*2+1])
     rets[7] = 2 if rets[7] == 3 else rets[7]
-    return rets
+    return rets, prediction
 

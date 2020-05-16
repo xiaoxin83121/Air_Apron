@@ -28,7 +28,7 @@ People_Num = 3   # 人判定为人群的人数阈值
 beta = 0.6
 
 ### rnn_classify.py
-hidden_size = 64
+hidden_size = 32
 num_layers = 2
 learning_rate = 0.002
 sigmoid_threshold = 0.5
@@ -46,8 +46,8 @@ INP_SIZE = 61
 OUT_SIZE = 16
 train_percent = 0.7
 sequence_size = 10
-num_epochs = 1000
-batch_size = 32
+num_epochs = 2000
+batch_size = 5
 
 
 EVENT_DICT = {

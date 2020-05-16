@@ -67,5 +67,5 @@ def single_bbox_joggle():
 
 
 
-event_loss('epoch_1000_modify_0')
+event_loss('epoch_1000_modify_3')
 # object_loss('../../data/log.txt')

@@ -169,6 +169,8 @@ def classify(split, fresh_dataset=False, exp_id=''):
     res = trainer.eval(test_loader, path=os.path.join(save_dir, str(num_epochs)+".pkl"))
     logger.write(res['percentages'])
     print(res['percentages'])
+    print("pres={}".format(res['precisions']))
+    print("recall={}".format(res['recalls']))
     # rnn_pkl = rnn_train(sequence_dic['samples_seg'], sequence_dic['labels_seg'], 'models/rnn/',
     #           1000, INP_SIZE, OUT_SIZE)
     # eval rnn_net
@@ -185,8 +187,8 @@ def classify(split, fresh_dataset=False, exp_id=''):
 
 
 if __name__ == "__main__":
-    # classify('test', fresh_dataset=False ,exp_id='epoch_2000')
+    classify('test', fresh_dataset=False ,exp_id='epoch_1000_modify_0')
     time_str = time.strftime('%Y-%m-%d-%H-%M')
-    classify('train', fresh_dataset=True, exp_id='epoch_1000_modify_1')
+    # classify('train', fresh_dataset=True, exp_id='epoch_1000_modify_3')
 
 
