@@ -106,11 +106,7 @@ def plane_pose(inputs):
 
     # 认为head的识别率会比较高
     if len(plane_dict['head']) < 1:
-        if not plane_exist:
-            plane_exist = False
-            # print("No plane and No head!")
-            center = [-1, -1]
-        # 否则按照原先的plane位置
+        pass
     else:
         head_sorted = sorted(plane_dict['head'], key=cal_prior, reverse=True)
         head = head_sorted[0]
@@ -121,20 +117,30 @@ def plane_pose(inputs):
             if not center_in(center, left_up, right_down):
                 plane_exist = False
             else:
-                new_width = max(center[0] - left_up[0], right_down[0] - center[0])
+                new_width = max(center[0] - left_up[0], right_down[0] - center[0]) # 有个比例
                 new_height = max(center[1] - left_up[1], right_down[1] - center[1])
                 plane['center'] = center if cal_distance(head, plane) >= config.Distance else \
                     [(1-config.alpha) * center[0] + config.alpha * plane['center'][0],
                      (1-config.alpha) * center[1] + config.alpha * plane['center'][1]]
                 plane['size'] = [new_width * 2, new_height * 2]
+        else:
+            plane = {
+                'class':'plane', 'center': head['center'], 'size': [0, 0]
+            }
+            head_size = head['size']
+            size = [int(head_size[0] / config.head_width_per), int(head_size[1] / config.head_height_per)]
+            plane['size'] = size
+            plane_exist = True
+
 
 
     horizon = 0
     ground = [0, 0]
     if plane_exist:
         if len(plane_dict['engine']) >= 2:
-            engine1 = plane_dict['engine'][0]['center']
-            engine2 = plane_dict['engine'][1]['center']
+            engine_sorted = sorted(plane_dict['engine'], key=cal_prior, reverse=True)
+            engine1 = engine_sorted[0]['center']
+            engine2 = engine_sorted[1]['center']
             dividend = ( abs(engine1[1] - engine2[1]) ) / ( abs(engine1[0] - engine2[0]) )
             horizon = math.atan(dividend)
         if len(plane_dict['wheel']) >= 1:

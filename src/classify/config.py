@@ -26,6 +26,8 @@ alpha = 0.5   # 飞机位置加权
 person_Distance = 10   # 人判定为人群的距离阈值
 People_Num = 3   # 人判定为人群的人数阈值
 beta = 0.6
+head_width_per = 0.213
+head_height_per = 0.518
 
 ### rnn_classify.py
 hidden_size = 32
