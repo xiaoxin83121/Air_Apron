@@ -130,8 +130,8 @@ class RNN_Trainer(object):
                     tn += 1
                 else:
                     fn += 1
-            precisions.append(tp / (tp+fp))
-            recalls.append(tp / (tp+fn))
+            precisions.append(tp / (tp+fp) if (tp+fp) != 0 else 0)
+            recalls.append(tp / (tp+fn) if (tp+fn) != 0 else 0)
 
         return {'rets': rets, 'percentages': percentages, 'precisions':precisions, 'recalls':recalls}
 

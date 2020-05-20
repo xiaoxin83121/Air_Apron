@@ -21,8 +21,8 @@ on_off_dict = [   # 懒惰删除中阈值参数
         0.975, 0.99, 0.985]
 
 ### pre_process.py
-Distance = 200  # 机鼻与飞机中心点距离
-alpha = 0.5   # 飞机位置加权
+Distance = 50  # 机鼻与飞机中心点距离
+alpha = 0.3   # 飞机位置加权
 person_Distance = 10   # 人判定为人群的距离阈值
 People_Num = 3   # 人判定为人群的人数阈值
 beta = 0.6
@@ -32,7 +32,7 @@ head_height_per = 0.518
 ### rnn_classify.py
 hidden_size = 32
 num_layers = 2
-learning_rate = 0.002
+learning_rate = 0.02
 sigmoid_threshold = 0.5
 
 ### similarity.py

@@ -152,6 +152,10 @@ def plane_pose(inputs):
         'class': 'plane',
         'center': plane['center'],
         'size': plane['size'],
+        'bbox': [[plane['center'][0]-plane['size'][0]/2, plane['center'][1]-plane['size'][1]/2],
+                 [plane['center'][0]-plane['size'][0]/2, plane['center'][1]+plane['size'][1]/2],
+                 [plane['center'][0]+plane['size'][0]/2, plane['center'][1]-plane['size'][1]/2],
+                 [plane['center'][0]+plane['size'][0]/2, plane['center'][1]+plane['size'][1]/2]],
         'horizon': horizon,
         'ground': ground,
         'score': 0.5

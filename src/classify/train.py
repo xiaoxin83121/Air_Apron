@@ -187,8 +187,8 @@ def classify(split, fresh_dataset=False, exp_id=''):
 
 
 if __name__ == "__main__":
-    classify('test', fresh_dataset=False ,exp_id='epoch_1000_modify_0')
+    # classify('test', fresh_dataset=False ,exp_id='2000_64_2_0.02_5')
     time_str = time.strftime('%Y-%m-%d-%H-%M')
-    # classify('train', fresh_dataset=True, exp_id='epoch_1000_modify_3')
+    classify('train', fresh_dataset=False, exp_id='2000_64_3_0.02_5')
 
 

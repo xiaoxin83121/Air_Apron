@@ -27,6 +27,7 @@ def object_loss(file_names):
         # plt.plot(losses['loss'])
         plt.xlabel('iter')
         plt.ylabel('loss')
+        plt.title('resnet-18-loss')
         plt.plot(losses['loss'][1:-1])
         plt.show()
         # print('loss={} | hm_loss={} | wh_loss={} | off_loss={}'.format(loss, hm_loss, wh_loss, off_loss))
@@ -169,15 +170,15 @@ def plane_analyse():
 
     plt.xlabel('num')
     plt.ylabel('percentage')
-    plt.plot(head_size_hs)
+    plt.plot(engine_l_ws)
     plt.show()
-    print(np.mean(np.array(head_size_hs)))
+    print(np.mean(np.array(engine_l_ws)))
 
 
 
 
 
 
-# event_loss('epoch_1000_modify_3')
+event_loss('5000_64_2_0.002_10')
 # object_loss('../../data/log.txt')
-plane_analyse()
+# plane_analyse()

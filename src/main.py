@@ -55,6 +55,7 @@ def main(opt):
         # 加入到分类网络中
         classification, prediction = rnn_demo(sample=[sequence], save_dir='classify/models/rnn/epoch_1000_modify_0',
                                               latest_iter=2000)
+        print(classification)
         count += 1
         classes.append(classification)
         predictions.append(prediction)
@@ -77,7 +78,7 @@ def main(opt):
     for i in range(8):
         splice = r[:, i]
         percentages.append(np.mean(splice))
-    print("acu={}".format(percentages))
+    print("acu={} mean={}".format(percentages, np.mean(np.array(percentages))))
 
     precisions = []
     recalls = []
@@ -100,8 +101,8 @@ def main(opt):
         # print("tp={}, fp={}, fn={}, tn={}".format(tp, fp, fn, tn))
         precisions.append(tp / (tp + fp) if tp+fp != 0 else 0)
         recalls.append(tp / (tp + fn) if tp+fn != 0 else 0)
-    print("prec={}".format(precisions))
-    print('rec={}'.format(recalls))
+    print("prec={} mean={}".format(precisions, np.mean(np.array(precisions))))
+    print('rec={} mean={}'.format(recalls, np.mean(np.array(recalls))))
 
 
 if __name__ == "__main__":
