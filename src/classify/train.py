@@ -8,6 +8,7 @@ import torch
 import time
 import random
 import json
+import numpy as np
 import classify.config as config
 from classify.pre_process import single_process, mul_process, safe_area, cal_distance
 from classify.data_augment import generate_dataset, generate_test, merge, data_augument
@@ -168,9 +169,9 @@ def classify(split, fresh_dataset=False, exp_id=''):
 
     res = trainer.eval(test_loader, path=os.path.join(save_dir, str(num_epochs)+".pkl"))
     logger.write(res['percentages'])
-    print(res['percentages'])
-    print("pres={}".format(res['precisions']))
-    print("recall={}".format(res['recalls']))
+    print("res={} means={}".format(res['percentages'], np.mean(np.array(res['percentages']))))
+    print("pres={} means={}".format(res['precisions'], np.mean(np.array(res['precisions']))))
+    print("recall={} means={}".format(res['recalls'], np.mean(np.array(res['recalls']))))
     # rnn_pkl = rnn_train(sequence_dic['samples_seg'], sequence_dic['labels_seg'], 'models/rnn/',
     #           1000, INP_SIZE, OUT_SIZE)
     # eval rnn_net
@@ -187,8 +188,8 @@ def classify(split, fresh_dataset=False, exp_id=''):
 
 
 if __name__ == "__main__":
-    # classify('test', fresh_dataset=False ,exp_id='2000_64_2_0.02_5')
+    classify('test', fresh_dataset=False ,exp_id='2000_64_3_0.02_5')
     time_str = time.strftime('%Y-%m-%d-%H-%M')
-    classify('train', fresh_dataset=False, exp_id='2000_64_3_0.02_5')
+    # classify('train', fresh_dataset=False, exp_id='2000_64_3_0.02_5')
 
 

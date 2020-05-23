@@ -172,7 +172,7 @@ def single_process(inputs):
     for inp in inputs:
         cls.add(inp['class'])
     # print(cls)
-    empty_dict = {'class':'', 'bbox':[], 'center':[0, 0], 'size': [0, 0], 'score': 0}
+    empty_dict = {'class':'', 'bbox':[[0, 0], [0, 0], [0, 0], [0, 0]], 'center':[0, 0], 'size': [0, 0], 'score': 0}
     is_oilcar = True if 'oil_car' in cls else False
     is_stair = True if 'stair' in cls else False
     is_traction = True if 'traction' in cls else False

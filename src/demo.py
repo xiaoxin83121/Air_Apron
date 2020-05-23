@@ -6,6 +6,7 @@ import os
 import sys
 import cv2
 import numpy as np
+import time
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -122,20 +123,72 @@ class Video(QWidget):
         self.label = QLabel(self)
         self.label.setText("Waiting for video...")
         self.label.setFixedSize(1024, 576)  # width height
-        self.label.move(50, 100)
-        self.label.setStyleSheet("QLabel{background:pink;}"
+        self.label.move(88, 220)
+        self.label.setStyleSheet("QLabel{background:rgb(255,255,240);}"
                                  "QLabel{color:rgb(100,100,100);font-size:15px;font-weight:bold;font-family:宋体;}"
                                  )
-        # 显示人数label
-        self.label_num = QLabel(self)
-        self.label_num.setText("Waiting for detectiong...")
-        self.label_num.setFixedSize(430, 40)  # width height
-        self.label_num.move(200, 20)
-        self.label_num.setStyleSheet("QLabel{background:yellow;}")
+
+        # 时间显示
+        self.time_label = QLabel(self)
+        self.time_label.setText("Time Display")
+        self.time_label.setFixedSize(250, 40)
+        self.time_label.move(100, 20)
+        self.time_label.setStyleSheet("QLabel{color:rgb(100,100,100);font-size:18px;font-weight:bold;font-family:宋体;}")
+
+        # 事件显示
+        self.oil_label = QLabel(self)
+        self.oil_label.setText("Waiting for detection...")
+        self.oil_label.setFixedSize(250, 40)
+        self.oil_label.move(400, 20)
+        self.oil_label.setStyleSheet("QLabel{color:rgb(100,100,100);font-size:18px;font-weight:bold;font-family:宋体;}")
+
+        # 显示label
+        self.stair_label = QLabel(self)
+        self.stair_label.setText("Waiting for detection...")
+        self.stair_label.setFixedSize(250, 40)  # width height
+        self.stair_label.move(400, 70)
+        self.stair_label.setStyleSheet("QLabel{color:rgb(100,100,100);font-size:18px;font-weight:bold;font-family:宋体;}")
+
+        self.cargo_label = QLabel(self)
+        self.cargo_label.setText("Waiting for detection...")
+        self.cargo_label.setFixedSize(250, 40)
+        self.cargo_label.move(400, 120)
+        self.cargo_label.setStyleSheet("QLabel{color:rgb(100,100,100);font-size:18px;font-weight:bold;font-family:宋体;}")
+
+        self.traction_label = QLabel(self)
+        self.traction_label.setText("Waiting for detection...")
+        self.traction_label.setFixedSize(250, 40)
+        self.traction_label.move(400, 170)
+        self.traction_label.setStyleSheet("QLabel{color:rgb(100,100,100);font-size:18px;font-weight:bold;font-family:宋体;}")
+
+        self.board_label = QLabel(self)
+        self.board_label.setText("Waiting for detection...")
+        self.board_label.setFixedSize(250, 40)
+        self.board_label.move(800, 20)
+        self.board_label.setStyleSheet("QLabel{color:rgb(100,100,100);font-size:18px;font-weight:bold;font-family:宋体;}")
+
+        self.prepare_label = QLabel(self)
+        self.prepare_label.setText("Waiting for detection...")
+        self.prepare_label.setFixedSize(250, 40)
+        self.prepare_label.move(800, 70)
+        self.prepare_label.setStyleSheet("QLabel{color:rgb(100,100,100);font-size:18px;font-weight:bold;font-family:宋体;}")
+
+        self.t_label = QLabel(self)
+        self.t_label.setText("Waiting for detection...")
+        self.t_label.setFixedSize(250, 40)
+        self.t_label.move(800, 120)
+        self.t_label.setStyleSheet("QLabel{color:rgb(100,100,100);font-size:18px;font-weight:bold;font-family:宋体;}")
+
+        self.alert_label = QLabel(self)
+        self.alert_label.setText("Waiting for detection...")
+        self.alert_label.setFixedSize(250, 40)
+        self.alert_label.move(800, 170)
+        self.alert_label.setStyleSheet("QLabel{color:rgb(100,100,100);font-size:18px;font-weight:bold;font-family:宋体;}")
+
         # 开启视频按键
         self.btn = QPushButton(self)
         self.btn.setText("Open")
-        self.btn.move(150, 870)
+        self.btn.move(250, 840)
         self.btn.clicked.connect(self.slotStart)
         # 检测按键
         # self.btn_detect = QPushButton(self)
@@ -146,7 +199,7 @@ class Video(QWidget):
         # 关闭视频按钮
         self.btn_stop = QPushButton(self)
         self.btn_stop.setText("Stop")
-        self.btn_stop.move(700, 870)
+        self.btn_stop.move(950, 840)
         self.btn_stop.clicked.connect(self.slotStop)
         # 检测用
         self.cls_map_id = ['__background__', 'plane', 'head', 'wheel', 'wings', 'stair',
@@ -161,6 +214,8 @@ class Video(QWidget):
         self.sequence = []
         self.rets = None
         self.result = None
+        self.status = ['开始', '结束', '进行中', '未发生']
+        self.alert_status= ['安全', '存在风险！', '危险！！！']
 
 
     def slotStart(self):
@@ -169,7 +224,7 @@ class Video(QWidget):
         videoName, _ = QFileDialog.getOpenFileName(self, "Open", "", "*.mp4;;*.avi;;*.asf;;All Files(*)")
         if videoName != "":  # “”为用户取消
             self.cap = cv2.VideoCapture(videoName)
-            self.timer_camera.start(100)
+            self.timer_camera.start(40)
             self.timer_camera.timeout.connect(self.openFrame)
 
     def slotStop(self):
@@ -178,12 +233,21 @@ class Video(QWidget):
         if self.cap != []:
             self.cap.release()
             self.timer_camera.stop()  # 停止计时器
+            self.time_label.setText("Time Display")
             self.label.setText("This video has been stopped.")
-            self.label.setStyleSheet("QLabel{background:pink;}"
+            self.oil_label.setText("Waiting for detection...")
+            self.stair_label.setText("Waiting for detection...")
+            self.cargo_label.setText("Waiting for detection...")
+            self.traction_label.setText("Waiting for detection...")
+            self.board_label.setText("Waiting for detection...")
+            self.prepare_label.setText("Waiting for detection...")
+            self.t_label.setText("Waiting for detection...")
+            self.alert_label.setText("Waiting for detection...")
+            self.label.setStyleSheet("QLabel{background:rgb(255,255,240);}"
                                      "QLabel{color:rgb(100,100,100);font-size:15px;font-weight:bold;font-family:宋体;}"
                                      )
         else:
-            self.label_num.setText("Push the left upper corner button to Quit.")
+            # self.label_num.setText("Push the left upper corner button to Quit.")
             Warning = QMessageBox.warning(self, "Warning", "Push the left upper corner button to Quit.",
                                           QMessageBox.Yes)
 
@@ -195,9 +259,15 @@ class Video(QWidget):
             if ret:
                 # frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
                 frame = cv2.resize(self.frame, (1024, 576))
-                if self.f % 80 == 0:
+                if self.f % 25 == 0:
+                    sec = self.f // 25
+                    m, s = divmod(sec, 60)
+                    h, m = divmod(m, 60)
+                    self.time_label.setText("Now: {}h-{}m-{}s".format(h, m, s))
+                if self.f % 25 == 0:
                 # # frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
                 #     frame = self.frame
+                    begin_time = time.time()
                     rets = self.detector.run(frame)
                     rets = self.format(rets['results'])
                     self.rets = rets
@@ -213,16 +283,25 @@ class Video(QWidget):
                         self.sequence.pop()
                         self.sequence.append(sample)
                     # 加入到分类网络中
+
                     classification, prediction = rnn_demo(sample=[self.sequence],
                                                           save_dir='classify/models/rnn/epoch_1000_modify_0',
                                                           latest_iter=2000)
+                    print(time.time()-begin_time)
                     self.count += 1
-                    self.label_num.setText(str(self.f)+' '+ str(classification))
+                    self.oil_label.setText("加油车连接"+self.status[classification[0]])
+                    self.stair_label.setText("客舱车连接"+self.status[classification[1]])
+                    self.cargo_label.setText("货舱车连接"+self.status[classification[2]])
+                    self.traction_label.setText("牵引车连接"+self.status[classification[3]])
+                    self.board_label.setText("乘客登机"+self.status[classification[4]])
+                    self.prepare_label.setText("起飞准备"+self.status[classification[5]])
+                    self.t_label.setText("牵引过程"+self.status[classification[6]])
+                    self.alert_label.setText("当前人员位置"+self.alert_status[classification[7]])
                 # print(self.rets)
                 for split in self.stable:
                     if self.result['is_' + split]:
                         obj = self.result[split]
-                        print(obj)
+                        # print(obj)
                         color = (250, 240, 230)
                         cls = obj['class']
                         bbox = obj['bbox']

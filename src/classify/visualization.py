@@ -179,6 +179,6 @@ def plane_analyse():
 
 
 
-event_loss('5000_64_2_0.002_10')
-# object_loss('../../data/log.txt')
+# event_loss('5000_64_2_0.002_10')
+object_loss('../../data/log_50_3000.txt')
 # plane_analyse()

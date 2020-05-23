@@ -36,7 +36,7 @@ learning_rate = 0.02
 sigmoid_threshold = 0.5
 
 ### similarity.py
-move_Distance = 10   # 判定移动的阈值
+move_Distance = 20   # 判定移动的阈值
 
 ### train.py
 

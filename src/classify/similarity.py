@@ -61,6 +61,10 @@ class Frame_Queue(object):
                 self.q[-1][split]['center'][1] = height
                 self.q[-1][split]['size'][0] = size_0
                 self.q[-1][split]['size'][1] = size_1
+                self.q[-1][split]['bbox'] = [[width-size_0/2, height-size_1/2],
+                 [width-size_0/2, height+size_1/2],
+                 [width+size_0/2, height-size_1/2],
+                 [width+size_0/2, height-size_1/2]],
                 self.q[-1][is_str] = True
             # if split == 'oil_car':
             #     print("w={} h={} c={} ct={}".format(width, height, count, self.q[-1][split]))

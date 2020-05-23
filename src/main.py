@@ -6,6 +6,7 @@ import sys
 import os
 import numpy as np
 import json
+import time
 
 from classify.similarity import Frame_Queue
 from classify.config import MAX_SIZE, WINDOWS
@@ -25,6 +26,7 @@ def main(opt):
     # get image from live or video
 
     # img in opt.demo
+    # begin_time = time.time()
     # rets = demo(opt)
     # with open('../data/rets.json', "w") as f:
     #     json.dump(rets, f)
@@ -56,6 +58,7 @@ def main(opt):
         classification, prediction = rnn_demo(sample=[sequence], save_dir='classify/models/rnn/epoch_1000_modify_0',
                                               latest_iter=2000)
         print(classification)
+        # print(time.time() - begin_time)
         count += 1
         classes.append(classification)
         predictions.append(prediction)
